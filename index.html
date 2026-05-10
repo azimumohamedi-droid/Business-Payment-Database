@@ -157,13 +157,99 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
   .xl-table .xl-hdr th{background:#1e2540!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
-/* ── Responsive ────────────────────────────────────────── */
+/* ── Hamburger btn (hidden on desktop) ─────────────────── */
+.mob-menu{display:none;align-items:center;justify-content:center;width:36px;height:36px;background:none;border:1px solid #e5e7eb;border-radius:7px;cursor:pointer;flex-shrink:0;color:#374151}
+.mob-menu svg{width:18px;height:18px}
+
+/* ── Sidebar overlay (mobile) ──────────────────────────── */
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:199;backdrop-filter:blur(1px)}
+.sb-overlay.on{display:block}
+
+/* ── Sidebar close btn (mobile only) ───────────────────── */
+.sb-close{display:none;position:absolute;top:14px;right:12px;background:none;border:none;color:#6b7280;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px}
+.sb-close:hover{color:#f9fafb}
+
+/* ── Tablet ─────────────────────────────────────────────── */
 @media(max-width:860px){
-  .sb{width:44px}
-  .sb-logo-name,.sb-logo-sub,.sb-grp,.sb-item span,.sb-footer{display:none}
-  .sb-item{padding:10px 14px;justify-content:center}
   .dash-grid{grid-template-columns:1fr 1fr}
   .dash-charts{grid-template-columns:1fr}
+}
+
+/* ── Mobile ─────────────────────────────────────────────── */
+@media(max-width:640px){
+  /* Sidebar becomes a fixed drawer */
+  .sb{position:fixed;top:0;left:-240px;height:100%;z-index:200;width:240px!important;min-width:240px!important;transition:left .25s ease;box-shadow:4px 0 20px rgba(0,0,0,.3)}
+  .sb.open{left:0}
+  .sb-close{display:block}
+  .sb-logo{padding-right:40px}
+
+  /* Show hamburger */
+  .mob-menu{display:flex}
+
+  /* Content fills full width */
+  .content{width:100%}
+
+  /* Compact header */
+  .ch{padding:10px 12px;gap:8px}
+  .ch-left h2{font-size:14px}
+  .ch-left p{display:none}
+  .btn-outline{display:none}/* hide Print btn */
+  .period-sel{font-size:11px;padding:5px 6px;max-width:100px}
+  .btn-sm{padding:6px 9px;font-size:11px}
+
+  /* Content body */
+  .cb{padding:12px}
+
+  /* Dashboard */
+  .dash-grid{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .dash-card{padding:12px}
+  .dash-card-val{font-size:18px}
+  .dash-charts{grid-template-columns:1fr;gap:10px;margin-bottom:12px}
+  .dash-cc-wrap{height:170px}
+
+  /* Forms → single column */
+  .form-card{max-width:100%;padding:16px}
+  .form-grid{grid-template-columns:1fr}
+  .fg.full{grid-column:1}
+  .btn-submit{width:100%;margin-top:12px}
+  .tt-btn{padding:11px}
+  .fi{font-size:16px}/* prevents iOS zoom on focus */
+
+  /* Filter bar */
+  .fbar{gap:6px}
+  .fi-sm{font-size:12px;flex:1;min-width:0}
+  .fbar-count{width:100%;text-align:right;margin-left:0}
+
+  /* Tables — horizontal scroll, compact */
+  .xl-wrap{border-radius:6px}
+  .xl-table{font-size:11.5px}
+  .xl-table tbody tr td,.xl-table .xl-hdr th{padding:5px 8px}
+  .xl-rn{width:28px;min-width:28px}
+
+  /* Toast above nav bar */
+  .toast{bottom:80px;right:12px;left:12px;text-align:center}
+
+  /* Bottom navigation bar */
+  .bot-nav{display:flex}
+}
+
+/* ── Bottom nav bar ─────────────────────────────────────── */
+.bot-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#111827;border-top:1px solid #1f2937;z-index:100;justify-content:space-around;padding:6px 0 max(6px,env(safe-area-inset-bottom))}
+.bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 10px;cursor:pointer;color:#6b7280;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;border:none;background:none;min-width:52px;transition:color .12s}
+.bn-item svg{width:18px;height:18px}
+.bn-item.active{color:#60a5fa}
+.bn-item:active{opacity:.7}
+
+/* Push content up so bottom nav doesn't overlap */
+@media(max-width:640px){
+  .cb{padding-bottom:80px}
+}
+
+/* ── Very small screens ─────────────────────────────────── */
+@media(max-width:360px){
+  .dash-grid{grid-template-columns:1fr}
+  .dash-card-val{font-size:16px}
+  .bn-item{min-width:40px;font-size:8px;padding:4px 6px}
 }
 </style>
 </head>
@@ -171,7 +257,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 <div class="app">
 
 <!-- ═══ SIDEBAR ════════════════════════════════════════════ -->
-<aside class="sb">
+<div class="sb-overlay" id="sbOverlay" onclick="closeSb()"></div>
+<aside class="sb" id="sbDrawer">
+  <button class="sb-close" onclick="closeSb()">×</button>
   <div class="sb-logo">
     <svg viewBox="0 0 32 32" fill="none">
       <rect width="32" height="32" rx="7" fill="#3b82f6" opacity=".18"/>
@@ -232,6 +320,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 <div class="content">
   <!-- Header -->
   <div class="ch">
+    <button class="mob-menu" onclick="openSb()" aria-label="Menu">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <line x1="2" y1="4.5" x2="16" y2="4.5"/><line x1="2" y1="9" x2="16" y2="9"/><line x1="2" y1="13.5" x2="16" y2="13.5"/>
+      </svg>
+    </button>
     <div class="ch-left">
       <h2 id="pgTitle">Dashboard</h2>
       <p id="pgSub"></p>
@@ -254,6 +347,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 </div>
 
 </div><!-- /app -->
+
+<!-- ═══ BOTTOM NAV (mobile) ════════════════════════════════ -->
+<nav class="bot-nav" id="botNav">
+  <button class="bn-item active" data-v="dashboard" onclick="nav('dashboard')">
+    <svg viewBox="0 0 18 18" fill="currentColor"><rect x="1" y="1" width="7" height="7" rx="1.2"/><rect x="10" y="1" width="7" height="7" rx="1.2"/><rect x="1" y="10" width="7" height="7" rx="1.2"/><rect x="10" y="10" width="7" height="7" rx="1.2"/></svg>
+    Dashboard
+  </button>
+  <button class="bn-item" data-v="add" onclick="nav('add')">
+    <svg viewBox="0 0 18 18" fill="currentColor"><path d="M9 2a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H3a1 1 0 110-2h5V3a1 1 0 011-1z"/></svg>
+    Add
+  </button>
+  <button class="bn-item" data-v="ledger" onclick="nav('ledger')">
+    <svg viewBox="0 0 18 18" fill="currentColor"><path d="M2 3h14a1 1 0 010 2H2a1 1 0 010-2zm0 5h14a1 1 0 010 2H2a1 1 0 010-2zm0 5h14a1 1 0 010 2H2a1 1 0 010-2z"/></svg>
+    Ledger
+  </button>
+  <button class="bn-item" data-v="income" onclick="nav('income')">
+    <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,14 6,9 10,11 16,4"/></svg>
+    P&amp;L
+  </button>
+  <button class="bn-item" data-v="monthly" onclick="nav('monthly')">
+    <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="1.5" y="3.5" width="15" height="13" rx="1.5"/><line x1="5.5" y1="1.5" x2="5.5" y2="5.5"/><line x1="12.5" y1="1.5" x2="12.5" y2="5.5"/><line x1="1.5" y1="8" x2="16.5" y2="8"/></svg>
+    Monthly
+  </button>
+</nav>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -327,12 +445,17 @@ const TITLES = {
   category:['Category Report','Breakdown of transactions by category'],
 };
 
+function openSb()  { document.getElementById('sbDrawer').classList.add('open');  document.getElementById('sbOverlay').classList.add('on'); }
+function closeSb() { document.getElementById('sbDrawer').classList.remove('open'); document.getElementById('sbOverlay').classList.remove('on'); }
+
 function nav(v) {
   curView = v;
   document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.v===v));
+  document.querySelectorAll('.bn-item').forEach(el => el.classList.toggle('active', el.dataset.v===v));
   const [title, sub] = TITLES[v] || [v,''];
   document.getElementById('pgTitle').textContent = title;
   document.getElementById('pgSub').textContent = sub;
+  closeSb();
   render();
 }
 
