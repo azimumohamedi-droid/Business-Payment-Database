@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BizTrack — Business Payment Control</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;background:#f3f4f6;color:#111827}
+
+/* ── App shell ─────────────────────────────────────────── */
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ── Sidebar ───────────────────────────────────────────── */
+.sb{width:232px;min-width:232px;background:#111827;display:flex;flex-direction:column;overflow-y:auto;border-right:1px solid #1f2937;flex-shrink:0}
+.sb::-webkit-scrollbar{width:3px}
+.sb::-webkit-scrollbar-thumb{background:#374151;border-radius:2px}
+
+.sb-logo{padding:16px 14px 14px;border-bottom:1px solid #1f2937;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sb-logo svg{width:32px;height:32px;flex-shrink:0}
+.sb-logo-name{font-size:15px;font-weight:700;color:#f9fafb;line-height:1.2}
+.sb-logo-sub{font-size:10px;color:#6b7280;margin-top:1px}
+
+.sb-grp{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:#374151;padding:14px 14px 5px}
+
+.sb-item{display:flex;align-items:center;gap:9px;padding:7px 14px;color:#9ca3af;cursor:pointer;font-size:12.5px;font-weight:500;border-left:2px solid transparent;transition:all .12s;user-select:none}
+.sb-item:hover{color:#f9fafb;background:#1f2937}
+.sb-item.active{color:#60a5fa;background:rgba(59,130,246,.12);border-left-color:#3b82f6}
+.sb-item svg{width:14px;height:14px;flex-shrink:0;opacity:.7}
+.sb-item.active svg{opacity:1}
+
+.sb-footer{margin-top:auto;padding:12px 14px;border-top:1px solid #1f2937}
+.sb-footer-info{font-size:10px;color:#4b5563;margin-bottom:8px}
+.btn-danger{width:100%;padding:7px;background:transparent;border:1px solid #374151;border-radius:6px;color:#6b7280;font-size:11px;cursor:pointer;transition:all .12s}
+.btn-danger:hover{border-color:#dc2626;color:#dc2626;background:rgba(220,38,38,.05)}
+
+/* ── Content area ──────────────────────────────────────── */
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+.ch{background:#fff;border-bottom:1px solid #e5e7eb;padding:11px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.ch-left h2{font-size:15px;font-weight:700;color:#111827;line-height:1.2}
+.ch-left p{font-size:11px;color:#6b7280;margin-top:1px}
+.ch-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+
+.period-sel{padding:6px 9px;background:#fff;border:1px solid #d1d5db;border-radius:6px;font-size:12px;color:#374151;cursor:pointer;outline:none}
+.period-sel:focus{border-color:#3b82f6}
+
+.btn-sm{padding:6px 12px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:opacity .12s}
+.btn-dark{background:#1e2540;color:#fff}
+.btn-dark:hover{opacity:.85}
+.btn-outline{background:#fff;color:#374151;border:1px solid #d1d5db}
+.btn-outline:hover{background:#f9fafb}
+
+.cb{flex:1;overflow-y:auto;padding:18px 22px}
+.cb::-webkit-scrollbar{width:6px}
+.cb::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}
+
+/* ── Excel-like tables ─────────────────────────────────── */
+.xl-wrap{background:#fff;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow-x:auto}
+.xl-table{width:100%;border-collapse:collapse;font-size:12.5px}
+
+.xl-table .xl-hdr th{background:#1e2540;color:#e5e7eb;padding:8px 10px;border:1px solid #2d3660;font-size:11px;font-weight:600;text-align:left;white-space:nowrap;position:sticky;top:0;z-index:5;cursor:pointer;user-select:none}
+.xl-table .xl-hdr th:hover{background:#263060}
+.xl-hdr th.s-asc::after{content:' ↑';color:#93c5fd}
+.xl-hdr th.s-desc::after{content:' ↓';color:#93c5fd}
+.xl-hdr .xl-rn{background:#111827!important;color:#4b5563!important;cursor:default!important}
+.xl-hdr .xl-rn:hover{background:#111827!important}
+.xl-hdr .no-sort{cursor:default!important}
+
+.xl-rn{background:#f3f4f6!important;color:#9ca3af!important;text-align:center!important;font-size:10.5px!important;width:36px;min-width:36px;border-color:#e5e7eb!important;font-weight:400!important}
+
+.xl-table tbody tr td{padding:6px 10px;border:1px solid #e5e7eb;color:#374151;transition:background .07s}
+.xl-table tbody tr:nth-child(odd) td{background:#fff}
+.xl-table tbody tr:nth-child(even) td{background:#f9fafb}
+.xl-table tbody tr:hover td{background:#eff6ff!important}
+
+.xl-num{text-align:right!important;font-variant-numeric:tabular-nums;font-family:'Consolas','Courier New',monospace;font-size:12px}
+.pos{color:#166534!important;font-weight:600}
+.neg{color:#991b1b!important;font-weight:600}
+
+/* Statement row variants */
+.xl-stmt-title td{background:#fff!important;font-size:15px;font-weight:800;color:#111827!important;border:none!important;padding:16px 12px 3px!important}
+.xl-stmt-sub td{background:#fff!important;font-size:11px;color:#6b7280!important;border:none!important;padding:0 12px 14px!important}
+.xl-spacer td{background:#f3f4f6!important;height:6px;padding:0!important;border:none!important;border-bottom:1px solid #e5e7eb!important}
+.xl-section td{background:#1e2540!important;color:#fff!important;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.8px;padding:7px 10px!important;border:1px solid #2d3660!important}
+.xl-indent td:nth-child(2){padding-left:26px!important}
+.xl-subtotal td{background:#dbeafe!important;font-weight:700!important;color:#1e3a5f!important;border-top:2px solid #3b82f6!important}
+.xl-total td{background:#1e2540!important;color:#fff!important;font-weight:800!important;font-size:13px!important;border:1px solid #2d3660!important}
+.xl-net-pos td{background:#dcfce7!important;color:#166534!important;font-weight:800!important;font-size:13px!important;border-top:3px double #16a34a!important}
+.xl-net-neg td{background:#fee2e2!important;color:#991b1b!important;font-weight:800!important;font-size:13px!important;border-top:3px double #dc2626!important}
+.xl-month-cur td{font-weight:700}
+
+/* ── Dashboard ─────────────────────────────────────────── */
+.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.dash-card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px}
+.dash-card-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:5px}
+.dash-card-val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.dash-card-sub{font-size:10px;color:#9ca3af;margin-top:4px}
+.dash-card-val.pos{color:#166534}
+.dash-card-val.neg{color:#991b1b}
+
+.dash-charts{display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:18px}
+.dash-cc{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px}
+.dash-cc-title{font-size:11px;font-weight:700;color:#374151;margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
+.dash-cc-wrap{position:relative;height:200px}
+
+.view-title{font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;margin-top:4px}
+
+/* ── Forms ─────────────────────────────────────────────── */
+.form-card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:22px;max-width:580px}
+.form-hdr{font-size:13px;font-weight:700;color:#111827;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #f3f4f6}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7280}
+.fi{padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;color:#111827;background:#fff;outline:none;transition:border-color .12s;width:100%}
+.fi:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.1)}
+.fi option{background:#fff}
+
+.type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.tt-btn{padding:9px;border:1px solid #d1d5db;border-radius:7px;background:#fff;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;transition:all .12s;text-align:center}
+.tt-btn.inc.on{background:#dcfce7;border-color:#16a34a;color:#166534}
+.tt-btn.exp.on{background:#fee2e2;border-color:#dc2626;color:#991b1b}
+
+.btn-submit{margin-top:16px;padding:10px 22px;background:#1e2540;border:none;border-radius:7px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .12s}
+.btn-submit:hover{opacity:.85}
+.btn-submit.green{background:#15803d}
+.btn-submit.green:hover{opacity:.9}
+
+/* ── Filter bar ────────────────────────────────────────── */
+.fbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.fi-sm{padding:5px 9px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;color:#374151;background:#fff;outline:none}
+.fi-sm:focus{border-color:#3b82f6}
+.fbar-count{margin-left:auto;font-size:11px;color:#9ca3af}
+
+/* ── Type badge ────────────────────────────────────────── */
+.badge-inc{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;background:#dcfce7;color:#166534}
+.badge-exp{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;background:#fee2e2;color:#991b1b}
+
+/* ── Delete btn ────────────────────────────────────────── */
+.del-btn{background:none;border:none;color:#d1d5db;cursor:pointer;font-size:16px;line-height:1;padding:0 3px;transition:color .1s}
+.del-btn:hover{color:#dc2626}
+
+/* ── Toast ─────────────────────────────────────────────── */
+.toast{position:fixed;bottom:22px;right:22px;background:#1e2540;border:1px solid #16a34a;border-radius:8px;padding:10px 18px;font-size:12px;font-weight:500;color:#4ade80;z-index:999;transform:translateY(60px);opacity:0;transition:all .25s;pointer-events:none}
+.toast.on{transform:translateY(0);opacity:1}
+
+/* ── Print ─────────────────────────────────────────────── */
+@media print{
+  .sb,.ch{display:none!important}
+  .content{overflow:visible!important}
+  .cb{overflow:visible!important;padding:0!important}
+  .xl-wrap{box-shadow:none!important;border:none!important}
+  .xl-table .xl-hdr th{background:#1e2540!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media(max-width:860px){
+  .sb{width:44px}
+  .sb-logo-name,.sb-logo-sub,.sb-grp,.sb-item span,.sb-footer{display:none}
+  .sb-item{padding:10px 14px;justify-content:center}
+  .dash-grid{grid-template-columns:1fr 1fr}
+  .dash-charts{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ═══ SIDEBAR ════════════════════════════════════════════ -->
+<aside class="sb">
+  <div class="sb-logo">
+    <svg viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="7" fill="#3b82f6" opacity=".18"/>
+      <polyline points="4,24 11,15 17,18 28,7" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="28" cy="7" r="2.5" fill="#16a34a"/>
+    </svg>
+    <div>
+      <div class="sb-logo-name">BizTrack</div>
+      <div class="sb-logo-sub">Payment Control</div>
+    </div>
+  </div>
+
+  <div class="sb-grp">Overview</div>
+  <div class="sb-item active" data-v="dashboard" onclick="nav('dashboard')">
+    <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+    <span>Dashboard</span>
+  </div>
+
+  <div class="sb-grp">Entry</div>
+  <div class="sb-item" data-v="profile" onclick="nav('profile')">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a3 3 0 100 6A3 3 0 008 1zM2 13c0-3 2.7-5 6-5s6 2 6 5H2z"/></svg>
+    <span>Business Profile</span>
+  </div>
+  <div class="sb-item" data-v="add" onclick="nav('add')">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 110-2h4V3a1 1 0 011-1z"/></svg>
+    <span>Add Transaction</span>
+  </div>
+
+  <div class="sb-grp">Financial Statements</div>
+  <div class="sb-item" data-v="ledger" onclick="nav('ledger')">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12a1 1 0 010 2H2a1 1 0 010-2zm0 4h12a1 1 0 010 2H2a1 1 0 010-2zm0 4h12a1 1 0 010 2H2a1 1 0 010-2z"/></svg>
+    <span>Transaction Ledger</span>
+  </div>
+  <div class="sb-item" data-v="income" onclick="nav('income')">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 12l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Income Statement</span>
+  </div>
+  <div class="sb-item" data-v="cashflow" onclick="nav('cashflow')">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1v14M3 6l5-5 5 5M3 10l5 5 5-5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Cash Flow</span>
+  </div>
+  <div class="sb-item" data-v="monthly" onclick="nav('monthly')">
+    <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="3" width="14" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M5 1v4M11 1v4M1 7h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span>Monthly Report</span>
+  </div>
+  <div class="sb-item" data-v="category" onclick="nav('category')">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h5v5H2zM9 4h5v5H9zM2 11h5v3H2zM9 11h5v3H9z" stroke="currentColor" stroke-width="1.3" fill="none" rx="1"/></svg>
+    <span>Category Report</span>
+  </div>
+
+  <div class="sb-footer">
+    <div class="sb-footer-info" id="sbInfo">0 transactions</div>
+    <button class="btn-danger" onclick="clearAll()">Clear All Data</button>
+  </div>
+</aside>
+
+<!-- ═══ CONTENT ════════════════════════════════════════════ -->
+<div class="content">
+  <!-- Header -->
+  <div class="ch">
+    <div class="ch-left">
+      <h2 id="pgTitle">Dashboard</h2>
+      <p id="pgSub"></p>
+    </div>
+    <div class="ch-right">
+      <select class="period-sel" id="periodSel" onchange="render()">
+        <option value="all">All Time</option>
+        <option value="year">This Year</option>
+        <option value="month" selected>This Month</option>
+        <option value="week">This Week</option>
+        <option value="today">Today</option>
+      </select>
+      <button class="btn-sm btn-outline" onclick="exportCSV()">↓ CSV</button>
+      <button class="btn-sm btn-dark" onclick="window.print()">⎙ Print</button>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="cb" id="cb"></div>
+</div>
+
+</div><!-- /app -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ Data ══════════════════════════════════════════════════
+let txs = JSON.parse(localStorage.getItem('biz_txs') || '[]');
+let biz = { name:'My Business', type:'Sole Trader', industry:'', currency:'USD', yearStart:'January', address:'', phone:'', email:'', ...JSON.parse(localStorage.getItem('biz_profile') || '{}') };
+
+// ═══ UI State ══════════════════════════════════════════════
+let curView = 'dashboard';
+let sortKey = 'date'; let sortAsc = false;
+let lSearch = ''; let lType = 'all'; let lCat = '';
+let addType = 'income';
+let charts = {};
+
+function save() {
+  localStorage.setItem('biz_txs', JSON.stringify(txs));
+  localStorage.setItem('biz_profile', JSON.stringify(biz));
+  document.getElementById('sbInfo').textContent = txs.length + ' transaction' + (txs.length !== 1 ? 's' : '');
+}
+
+// ═══ Helpers ═══════════════════════════════════════════════
+function toDS(d) { return d.toISOString().split('T')[0]; }
+function parseDL(s) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function money(n) {
+  const sym = {USD:'$',EUR:'€',GBP:'£',JPY:'¥',AUD:'A$',CAD:'C$',CHF:'Fr',INR:'₹'}[biz.currency]||'$';
+  return sym + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function sd(s) { return parseDL(s).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'}); }
+function mLabel(y,m) { return new Date(y,m,1).toLocaleDateString('en-US',{month:'short',year:'numeric'}); }
+function sum(list) {
+  const inc=list.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=list.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  return {inc,exp,net:inc-exp};
+}
+function signVal(n) { return (n<0?'-':'')+money(n); }
+function cls(n) { return n>0?'pos':n<0?'neg':''; }
+
+// ═══ Period filter ══════════════════════════════════════════
+function periodTxs() {
+  const p = document.getElementById('periodSel')?.value || 'all';
+  if (p==='all') return [...txs];
+  const now=new Date(); let s,e;
+  if (p==='today') {
+    s=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    e=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59,999);
+  } else if (p==='week') {
+    const dy=now.getDay();
+    s=new Date(now); s.setDate(now.getDate()-(dy===0?6:dy-1)); s.setHours(0,0,0,0);
+    e=new Date(s); e.setDate(s.getDate()+6); e.setHours(23,59,59,999);
+  } else if (p==='month') {
+    s=new Date(now.getFullYear(),now.getMonth(),1);
+    e=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59,999);
+  } else {
+    s=new Date(now.getFullYear(),0,1);
+    e=new Date(now.getFullYear(),11,31,23,59,59,999);
+  }
+  return txs.filter(t=>{ const d=parseDL(t.date); return d>=s && d<=e; });
+}
+
+// ═══ Navigation ════════════════════════════════════════════
+const TITLES = {
+  dashboard:['Dashboard','Overview of your business performance'],
+  profile:['Business Profile','Your company details and settings'],
+  add:['Add Transaction','Record a new income or expense entry'],
+  ledger:['Transaction Ledger','Complete record of all transactions'],
+  income:['Income Statement','Profit & Loss — Revenue vs Expenses'],
+  cashflow:['Cash Flow Statement','All cash movements with running balance'],
+  monthly:['Monthly Report','Month-by-month P&L for the past 12 months'],
+  category:['Category Report','Breakdown of transactions by category'],
+};
+
+function nav(v) {
+  curView = v;
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.v===v));
+  const [title, sub] = TITLES[v] || [v,''];
+  document.getElementById('pgTitle').textContent = title;
+  document.getElementById('pgSub').textContent = sub;
+  render();
+}
+
+function render() {
+  Object.values(charts).forEach(c=>c&&c.destroy&&c.destroy());
+  charts = {};
+  const cb = document.getElementById('cb');
+  const ft = periodTxs();
+  if (curView==='dashboard')  vDashboard(cb, ft);
+  else if (curView==='profile') vProfile(cb);
+  else if (curView==='add')   vAdd(cb);
+  else if (curView==='ledger') vLedger(cb, ft);
+  else if (curView==='income') vIncome(cb, ft);
+  else if (curView==='cashflow') vCashflow(cb, ft);
+  else if (curView==='monthly') vMonthly(cb);
+  else if (curView==='category') vCategory(cb, ft);
+}
+
+// ═══ DASHBOARD ═════════════════════════════════════════════
+function vDashboard(cb, ft) {
+  const s = sum(ft);
+  const tod = toDS(new Date());
+  const st = sum(txs.filter(t=>t.date===tod));
+  const yrSt = sum(txs.filter(t=>{ const d=parseDL(t.date); return d.getFullYear()===new Date().getFullYear(); }));
+
+  cb.innerHTML = `
+  <div class="dash-grid">
+    <div class="dash-card">
+      <div class="dash-card-lbl">Period Revenue</div>
+      <div class="dash-card-val pos">${money(s.inc)}</div>
+      <div class="dash-card-sub">${ft.filter(t=>t.type==='income').length} income entries</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-lbl">Period Expenses</div>
+      <div class="dash-card-val neg">${money(s.exp)}</div>
+      <div class="dash-card-sub">${ft.filter(t=>t.type==='expense').length} expense entries</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-lbl">Net Income</div>
+      <div class="dash-card-val ${cls(s.net)}">${signVal(s.net)}</div>
+      <div class="dash-card-sub">${s.net>=0?'Profitable':'At a loss'} this period</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-lbl">Year-to-Date Net</div>
+      <div class="dash-card-val ${cls(yrSt.net)}">${signVal(yrSt.net)}</div>
+      <div class="dash-card-sub">${txs.filter(t=>parseDL(t.date).getFullYear()===new Date().getFullYear()).length} txns this year</div>
+    </div>
+  </div>
+  <div class="dash-charts">
+    <div class="dash-cc">
+      <div class="dash-cc-title">Net Balance Trend — Last 30 Days</div>
+      <div class="dash-cc-wrap"><canvas id="cTrend"></canvas></div>
+    </div>
+    <div class="dash-cc">
+      <div class="dash-cc-title">Income vs Expense</div>
+      <div class="dash-cc-wrap"><canvas id="cDonut"></canvas></div>
+    </div>
+  </div>
+  <div class="view-title">Recent Transactions</div>
+  <div class="xl-wrap">${recentTable(ft.slice(0,12))}</div>`;
+
+  // Trend chart
+  const map={};
+  const base=new Date(); base.setHours(0,0,0,0);
+  for(let i=29;i>=0;i--){ const d=new Date(base); d.setDate(base.getDate()-i); map[toDS(d)]={inc:0,exp:0}; }
+  txs.forEach(t=>{ if(map[t.date]){ map[t.date][t.type==='income'?'inc':'exp']+=t.amount; }});
+  let cum=0;
+  const tData=Object.keys(map).sort().map(k=>{ cum+=map[k].inc-map[k].exp; return{x:k,y:+cum.toFixed(2)}; });
+  const pos = (tData[tData.length-1]?.y??0)>=0;
+  const lc = pos?'#16a34a':'#dc2626';
+  const tc = document.getElementById('cTrend')?.getContext('2d');
+  if(tc){
+    const g=tc.createLinearGradient(0,0,0,200);
+    g.addColorStop(0,pos?'rgba(22,163,74,.22)':'rgba(220,38,38,.22)');
+    g.addColorStop(1,'rgba(0,0,0,0)');
+    charts.trend=new Chart(tc,{
+      type:'line',
+      data:{datasets:[{data:tData,borderColor:lc,backgroundColor:g,borderWidth:2,fill:true,tension:.35,pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:lc}]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2540',borderColor:'#374151',borderWidth:1,titleColor:'#9ca3af',bodyColor:'#f3f4f6',callbacks:{title:i=>sd(i[0].raw.x),label:i=>`Balance: ${money(i.raw.y)}`}}},
+        scales:{x:{type:'time',time:{unit:'day'},grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',font:{size:10},maxTicksLimit:7}},
+          y:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',font:{size:10},callback:v=>'$'+v.toLocaleString()}}}}
+    });
+  }
+
+  // Donut
+  const dc=document.getElementById('cDonut')?.getContext('2d');
+  if(dc){
+    charts.donut=new Chart(dc,{
+      type:'doughnut',
+      data:{labels:['Income','Expense'],datasets:[{data:[s.inc,s.exp],backgroundColor:['#16a34a','#dc2626'],borderWidth:0,hoverOffset:4}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#374151',font:{size:11}}},
+          tooltip:{backgroundColor:'#1e2540',borderColor:'#374151',borderWidth:1,titleColor:'#9ca3af',bodyColor:'#f3f4f6',callbacks:{label:i=>`  ${i.label}: ${money(i.raw)}`}}}}
+    });
+  }
+}
+
+function recentTable(rows) {
+  if (!rows.length) return '<div style="padding:28px;text-align:center;color:#9ca3af;font-style:italic;">No transactions yet. <a onclick="nav(\'add\')" style="color:#3b82f6;cursor:pointer;text-decoration:underline;">Add one →</a></div>';
+  return `<table class="xl-table">
+    <thead><tr class="xl-hdr">
+      <th class="xl-rn no-sort">#</th><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th class="xl-num">Amount</th>
+    </tr></thead>
+    <tbody>${rows.map((t,i)=>`<tr>
+      <td class="xl-rn">${i+1}</td>
+      <td>${sd(t.date)}</td>
+      <td><span class="${t.type==='income'?'badge-inc':'badge-exp'}">${t.type==='income'?'↑ Income':'↓ Expense'}</span></td>
+      <td>${esc(t.cat)}</td><td>${esc(t.desc)}</td>
+      <td class="xl-num ${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${money(t.amount)}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+// ═══ BUSINESS PROFILE ══════════════════════════════════════
+function vProfile(cb) {
+  const sel = (opts,val) => opts.map(o=>`<option${val===o?' selected':''}>${o}</option>`).join('');
+  cb.innerHTML = `
+  <div class="form-card">
+    <div class="form-hdr">Business Details</div>
+    <div class="form-grid">
+      <div class="fg"><label>Business Name</label><input class="fi" id="bName" value="${esc(biz.name)}"></div>
+      <div class="fg"><label>Business Type</label><select class="fi" id="bType">${sel(['Sole Trader','Partnership','LLC','Corporation','Non-Profit','Other'],biz.type)}</select></div>
+      <div class="fg"><label>Industry</label><input class="fi" id="bIndustry" value="${esc(biz.industry)}" placeholder="e.g. Retail, Food, Tech"></div>
+      <div class="fg"><label>Currency</label><select class="fi" id="bCurr">${sel(['USD','EUR','GBP','JPY','AUD','CAD','CHF','INR'],biz.currency)}</select></div>
+      <div class="fg"><label>Financial Year Start</label><select class="fi" id="bYS">${sel(['January','February','March','April','May','June','July','August','September','October','November','December'],biz.yearStart)}</select></div>
+      <div class="fg"><label>Phone</label><input class="fi" id="bPhone" value="${esc(biz.phone)}" placeholder="+1 555 000 0000"></div>
+      <div class="fg full"><label>Business Address</label><input class="fi" id="bAddr" value="${esc(biz.address)}" placeholder="Street, City, State, ZIP"></div>
+      <div class="fg full"><label>Email</label><input class="fi" id="bEmail" value="${esc(biz.email)}" placeholder="business@example.com"></div>
+    </div>
+    <button class="btn-submit green" onclick="saveProfile()">Save Profile</button>
+  </div>`;
+}
+
+function saveProfile() {
+  biz.name    = document.getElementById('bName').value.trim() || 'My Business';
+  biz.type    = document.getElementById('bType').value;
+  biz.industry= document.getElementById('bIndustry').value.trim();
+  biz.currency= document.getElementById('bCurr').value;
+  biz.yearStart=document.getElementById('bYS').value;
+  biz.phone   = document.getElementById('bPhone').value.trim();
+  biz.address = document.getElementById('bAddr').value.trim();
+  biz.email   = document.getElementById('bEmail').value.trim();
+  save(); toast('Profile saved ✓');
+}
+
+// ═══ ADD TRANSACTION ═══════════════════════════════════════
+function vAdd(cb) {
+  cb.innerHTML = `
+  <div class="form-card">
+    <div class="form-hdr">New Transaction</div>
+    <div class="type-toggle">
+      <button class="tt-btn inc${addType==='income'?' on':''}" onclick="setAddType('income')">↑ Income</button>
+      <button class="tt-btn exp${addType==='expense'?' on':''}" onclick="setAddType('expense')">↓ Expense</button>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label>Date</label><input type="date" class="fi" id="fDate" value="${toDS(new Date())}"></div>
+      <div class="fg"><label>Amount (${biz.currency})</label><input type="number" class="fi" id="fAmt" placeholder="0.00" min="0" step="0.01"></div>
+      <div class="fg"><label>Category</label>
+        <select class="fi" id="fCat">
+          <option value="">— select category —</option>
+          <optgroup label="Income">
+            <option>Sales</option><option>Services</option><option>Consulting</option>
+            <option>Investment Return</option><option>Other Income</option>
+          </optgroup>
+          <optgroup label="Expense">
+            <option>Supplies / Stock</option><option>Rent</option><option>Utilities</option>
+            <option>Payroll</option><option>Marketing</option><option>Maintenance</option>
+            <option>Transport</option><option>Tax</option><option>Other Expense</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="fg"><label>Reference # (optional)</label><input class="fi" id="fRef" placeholder="INV-001"></div>
+      <div class="fg full"><label>Description</label><input class="fi" id="fDesc" placeholder="Describe this transaction…"></div>
+      <div class="fg full"><label>Notes (optional)</label><input class="fi" id="fNotes" placeholder="Additional details…"></div>
+    </div>
+    <button class="btn-submit" onclick="submitTx()">Add Transaction</button>
+  </div>`;
+}
+
+function setAddType(t) { addType=t; vAdd(document.getElementById('cb')); }
+
+function submitTx() {
+  const date=document.getElementById('fDate').value;
+  const amt=parseFloat(document.getElementById('fAmt').value);
+  const cat=document.getElementById('fCat').value;
+  const ref=document.getElementById('fRef').value.trim();
+  const desc=document.getElementById('fDesc').value.trim();
+  const notes=document.getElementById('fNotes').value.trim();
+  if (!date){ alert('Date required.'); return; }
+  if (!amt||amt<=0){ alert('Enter a valid amount.'); return; }
+  if (!cat){ alert('Select a category.'); return; }
+  if (!desc){ alert('Description required.'); return; }
+  txs.unshift({id:uid(),date,type:addType,cat,ref,desc,notes,amount:amt});
+  save(); toast('Transaction added ✓'); nav('ledger');
+}
+
+// ═══ TRANSACTION LEDGER ════════════════════════════════════
+function vLedger(cb, ft) {
+  let rows = [...ft];
+  if (lSearch) rows=rows.filter(t=>(t.desc+t.cat+(t.ref||'')).toLowerCase().includes(lSearch.toLowerCase()));
+  if (lType!=='all') rows=rows.filter(t=>t.type===lType);
+  if (lCat) rows=rows.filter(t=>t.cat===lCat);
+  rows.sort((a,b)=>{
+    let va=a[sortKey]??'', vb=b[sortKey]??'';
+    if(sortKey==='amount'){va=a.amount;vb=b.amount;}
+    const c=va<vb?-1:va>vb?1:0; return sortAsc?c:-c;
+  });
+  const sorted=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
+  let bal=0; const bMap={};
+  sorted.forEach(t=>{ bal+=(t.type==='income'?t.amount:-t.amount); bMap[t.id]=+bal.toFixed(2); });
+  const s=sum(rows);
+  const cats=[...new Set(ft.map(t=>t.cat))].sort();
+  function th(k,lbl,w=''){const a=sortKey===k?(sortAsc?' s-asc':' s-desc'):'';return`<th class="${a}"${w?` style="width:${w}"`:''}onclick="sortBy('${k}')">${lbl}</th>`;}
+  cb.innerHTML = `
+  <div class="fbar">
+    <input class="fi-sm" placeholder="Search description, category, ref…" value="${esc(lSearch)}" oninput="lSearch=this.value;render()">
+    <select class="fi-sm" onchange="lType=this.value;render()">
+      <option value="all"${lType==='all'?' selected':''}>All Types</option>
+      <option value="income"${lType==='income'?' selected':''}>Income Only</option>
+      <option value="expense"${lType==='expense'?' selected':''}>Expenses Only</option>
+    </select>
+    <select class="fi-sm" onchange="lCat=this.value;render()">
+      <option value="">All Categories</option>
+      ${cats.map(c=>`<option${lCat===c?' selected':''}>${c}</option>`).join('')}
+    </select>
+    <button class="btn-sm btn-dark" onclick="nav('add')" style="padding:5px 11px;">+ Add</button>
+    <span class="fbar-count">${rows.length} records</span>
+  </div>
+  <div class="xl-wrap"><table class="xl-table">
+    <thead><tr class="xl-hdr">
+      <th class="xl-rn no-sort">#</th>
+      ${th('date','Date','95px')}
+      ${th('ref','Ref #','80px')}
+      ${th('type','Type','90px')}
+      ${th('cat','Category','130px')}
+      ${th('desc','Description')}
+      ${th('amount','Amount','110px')}
+      <th class="xl-num no-sort" style="width:110px">Balance</th>
+      <th class="no-sort" style="width:32px"></th>
+    </tr></thead>
+    <tbody>
+    ${rows.length ? rows.map((t,i)=>`<tr>
+      <td class="xl-rn">${i+1}</td>
+      <td>${sd(t.date)}</td>
+      <td style="color:#9ca3af;font-size:11px;">${esc(t.ref||'—')}</td>
+      <td><span class="${t.type==='income'?'badge-inc':'badge-exp'}">${t.type==='income'?'↑ Income':'↓ Expense'}</span></td>
+      <td>${esc(t.cat)}</td>
+      <td>${esc(t.desc)}${t.notes?`<span style="color:#9ca3af;font-size:11px;"> · ${esc(t.notes)}</span>`:''}</td>
+      <td class="xl-num ${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${money(t.amount)}</td>
+      <td class="xl-num ${cls(bMap[t.id])}">${signVal(bMap[t.id])}</td>
+      <td style="text-align:center"><button class="del-btn" onclick="delTx('${t.id}')">×</button></td>
+    </tr>`).join('') : `<tr><td colspan="9" style="padding:32px;text-align:center;color:#9ca3af;font-style:italic;">No transactions match the current filters.</td></tr>`}
+    </tbody>
+    <tfoot><tr class="xl-total">
+      <td class="xl-rn"></td>
+      <td colspan="5" style="font-size:11px;letter-spacing:.4px">TOTALS — ${rows.length} records</td>
+      <td class="xl-num" style="font-size:11px;line-height:1.6">
+        <div>↑ ${money(s.inc)}</div><div>↓ ${money(s.exp)}</div>
+      </td>
+      <td class="xl-num ${cls(s.net)}" style="font-size:14px">${signVal(s.net)}</td>
+      <td></td>
+    </tr></tfoot>
+  </table></div>`;
+}
+
+function sortBy(k) { if(sortKey===k) sortAsc=!sortAsc; else{sortKey=k;sortAsc=false;} render(); }
+function delTx(id) { txs=txs.filter(t=>t.id!==id); save(); render(); }
+
+// ═══ INCOME STATEMENT ══════════════════════════════════════
+function vIncome(cb, ft) {
+  const pLabel = {all:'All Time',year:'This Year',month:'This Month',week:'This Week',today:'Today'}[document.getElementById('periodSel').value]||'';
+  const iCats={}, eCats={};
+  ft.forEach(t=>{ if(t.type==='income') iCats[t.cat]=(iCats[t.cat]||0)+t.amount;
+    else eCats[t.cat]=(eCats[t.cat]||0)+t.amount; });
+  const ti=Object.values(iCats).reduce((s,v)=>s+v,0);
+  const te=Object.values(eCats).reduce((s,v)=>s+v,0);
+  const net=ti-te; let rn=1;
+  const iRows=Object.entries(iCats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>
+    `<tr class="xl-indent"><td class="xl-rn">${rn++}</td><td>${esc(c)}</td><td></td><td class="xl-num pos">${money(v)}</td></tr>`).join('');
+  const eRows=Object.entries(eCats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>
+    `<tr class="xl-indent"><td class="xl-rn">${rn++}</td><td>${esc(c)}</td><td class="xl-num neg">${money(v)}</td><td></td></tr>`).join('');
+  cb.innerHTML = `<div class="xl-wrap"><table class="xl-table">
+    <colgroup><col style="width:40px"><col><col style="width:130px"><col style="width:130px"></colgroup>
+    <thead><tr class="xl-hdr">
+      <th class="xl-rn no-sort">#</th><th class="no-sort">Description</th>
+      <th class="xl-num no-sort">Expenses</th><th class="xl-num no-sort">Revenue</th>
+    </tr></thead>
+    <tbody>
+      <tr class="xl-stmt-title"><td></td><td colspan="3">${esc(biz.name)}</td></tr>
+      <tr class="xl-stmt-sub"><td></td><td colspan="3">Income Statement &nbsp;|&nbsp; ${pLabel}</td></tr>
+      <tr class="xl-spacer"><td colspan="4"></td></tr>
+      <tr class="xl-section"><td></td><td colspan="3">Revenue</td></tr>
+      ${iRows||`<tr class="xl-indent"><td class="xl-rn">—</td><td colspan="3" style="color:#9ca3af;font-style:italic;">No income in this period</td></tr>`}
+      <tr class="xl-subtotal"><td class="xl-rn"></td><td>Total Revenue</td><td></td><td class="xl-num pos">${money(ti)}</td></tr>
+      <tr class="xl-spacer"><td colspan="4"></td></tr>
+      <tr class="xl-section"><td></td><td colspan="3">Expenses</td></tr>
+      ${eRows||`<tr class="xl-indent"><td class="xl-rn">—</td><td colspan="3" style="color:#9ca3af;font-style:italic;">No expenses in this period</td></tr>`}
+      <tr class="xl-subtotal"><td class="xl-rn"></td><td>Total Expenses</td><td class="xl-num neg">${money(te)}</td><td></td></tr>
+      <tr class="xl-spacer"><td colspan="4"></td></tr>
+      <tr class="${net>=0?'xl-net-pos':'xl-net-neg'}"><td class="xl-rn"></td><td>${net>=0?'NET INCOME':'NET LOSS'}</td><td></td><td class="xl-num">${signVal(net)}</td></tr>
+    </tbody>
+  </table></div>`;
+}
+
+// ═══ CASH FLOW ═════════════════════════════════════════════
+function vCashflow(cb, ft) {
+  const pLabel = {all:'All Time',year:'This Year',month:'This Month',week:'This Week',today:'Today'}[document.getElementById('periodSel').value]||'';
+  const sorted=[...ft].sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
+  let bal=0;
+  const rows=sorted.map((t,i)=>{
+    bal+=(t.type==='income'?t.amount:-t.amount);
+    return `<tr>
+      <td class="xl-rn">${i+1}</td>
+      <td>${sd(t.date)}</td>
+      <td style="color:#9ca3af;font-size:11px;">${esc(t.ref||'—')}</td>
+      <td><span class="${t.type==='income'?'badge-inc':'badge-exp'}">${t.type==='income'?'↑':'↓'}</span></td>
+      <td>${esc(t.cat)}</td>
+      <td>${esc(t.desc)}</td>
+      <td class="xl-num ${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${money(t.amount)}</td>
+      <td class="xl-num ${cls(bal)}">${signVal(bal)}</td>
+      <td style="text-align:center"><button class="del-btn" onclick="delTx('${t.id}')">×</button></td>
+    </tr>`;
+  }).join('');
+  const s=sum(ft);
+  cb.innerHTML = `<div class="xl-wrap"><table class="xl-table">
+    <colgroup><col style="width:40px"><col style="width:96px"><col style="width:76px"><col style="width:76px"><col style="width:128px"><col><col style="width:114px"><col style="width:114px"><col style="width:32px"></colgroup>
+    <thead><tr class="xl-hdr">
+      <th class="xl-rn no-sort">#</th><th>Date</th><th>Ref #</th><th class="no-sort">Type</th><th>Category</th><th>Description</th>
+      <th class="xl-num no-sort">Amount</th><th class="xl-num no-sort">Running Balance</th><th class="no-sort"></th>
+    </tr></thead>
+    <tbody>
+      <tr class="xl-stmt-title"><td></td><td colspan="8">${esc(biz.name)}</td></tr>
+      <tr class="xl-stmt-sub"><td></td><td colspan="8">Cash Flow Statement &nbsp;|&nbsp; ${pLabel}</td></tr>
+      <tr class="xl-spacer"><td colspan="9"></td></tr>
+      <tr class="xl-section"><td></td><td colspan="8">Cash Movements — Operating Activities</td></tr>
+      ${rows||`<tr><td colspan="9" style="padding:32px;text-align:center;color:#9ca3af;font-style:italic;">No transactions in this period.</td></tr>`}
+      <tr class="xl-spacer"><td colspan="9"></td></tr>
+      <tr class="xl-total">
+        <td class="xl-rn"></td><td colspan="5">NET CASH FLOW</td>
+        <td class="xl-num ${cls(s.net)}">${signVal(s.net)}</td>
+        <td class="xl-num ${cls(bal)}">${signVal(bal)}</td><td></td>
+      </tr>
+    </tbody>
+  </table></div>`;
+}
+
+// ═══ MONTHLY REPORT ════════════════════════════════════════
+function vMonthly(cb) {
+  const now=new Date(); let cumNet=0;
+  const months=[];
+  for(let i=11;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const y=d.getFullYear(),m=d.getMonth();
+    const mt=txs.filter(t=>{ const td=parseDL(t.date); return td.getFullYear()===y&&td.getMonth()===m; });
+    months.push({label:mLabel(y,m),y,m,s:sum(mt),count:mt.length,cur:y===now.getFullYear()&&m===now.getMonth()});
+  }
+  const rows=months.map((mo,i)=>{
+    cumNet+=mo.s.net;
+    return `<tr class="${mo.cur?'xl-month-cur':''}">
+      <td class="xl-rn">${i+1}</td>
+      <td>${mo.label}${mo.cur?'<span style="margin-left:6px;padding:1px 5px;border-radius:3px;font-size:9px;background:#dbeafe;color:#1d4ed8;font-weight:700;">CURRENT</span>':''}</td>
+      <td style="text-align:center;color:#6b7280;font-size:11px;">${mo.count}</td>
+      <td class="xl-num pos">${money(mo.s.inc)}</td>
+      <td class="xl-num neg">${money(mo.s.exp)}</td>
+      <td class="xl-num ${cls(mo.s.net)}">${signVal(mo.s.net)}</td>
+      <td class="xl-num ${cls(cumNet)}">${signVal(cumNet)}</td>
+    </tr>`;
+  }).join('');
+  const tot=months.reduce((a,mo)=>({inc:a.inc+mo.s.inc,exp:a.exp+mo.s.exp,net:a.net+mo.s.net}),{inc:0,exp:0,net:0});
+  cb.innerHTML = `<div class="xl-wrap"><table class="xl-table">
+    <colgroup><col style="width:40px"><col style="min-width:140px"><col style="width:70px"><col style="width:126px"><col style="width:126px"><col style="width:126px"><col style="width:126px"></colgroup>
+    <thead><tr class="xl-hdr">
+      <th class="xl-rn no-sort">#</th><th>Month</th><th style="text-align:center" class="no-sort">Txns</th>
+      <th class="xl-num no-sort">Income</th><th class="xl-num no-sort">Expense</th>
+      <th class="xl-num no-sort">Net P&amp;L</th><th class="xl-num no-sort">Cumulative</th>
+    </tr></thead>
+    <tbody>
+      <tr class="xl-stmt-title"><td></td><td colspan="6">${esc(biz.name)}</td></tr>
+      <tr class="xl-stmt-sub"><td></td><td colspan="6">Monthly P&amp;L Report — 12 Months</td></tr>
+      <tr class="xl-spacer"><td colspan="7"></td></tr>
+      ${rows}
+      <tr class="xl-spacer"><td colspan="7"></td></tr>
+      <tr class="xl-total">
+        <td class="xl-rn"></td><td>12-MONTH TOTAL</td>
+        <td style="text-align:center;">${months.reduce((s,m)=>s+m.count,0)}</td>
+        <td class="xl-num">${money(tot.inc)}</td>
+        <td class="xl-num">${money(tot.exp)}</td>
+        <td class="xl-num ${cls(tot.net)}">${signVal(tot.net)}</td>
+        <td class="xl-num ${cls(cumNet)}">${signVal(cumNet)}</td>
+      </tr>
+    </tbody>
+  </table></div>`;
+}
+
+// ═══ CATEGORY REPORT ═══════════════════════════════════════
+function vCategory(cb, ft) {
+  const pLabel = {all:'All Time',year:'This Year',month:'This Month',week:'This Week',today:'Today'}[document.getElementById('periodSel').value]||'';
+  const byCat={};
+  ft.forEach(t=>{
+    if(!byCat[t.cat]) byCat[t.cat]={cat:t.cat,inc:0,exp:0,count:0};
+    byCat[t.cat][t.type==='income'?'inc':'exp']+=t.amount;
+    byCat[t.cat].count++;
+  });
+  const cats=Object.values(byCat).sort((a,b)=>(b.inc+b.exp)-(a.inc+a.exp));
+  const tot=cats.reduce((a,r)=>({inc:a.inc+r.inc,exp:a.exp+r.exp}),{inc:0,exp:0});
+  const iCats=cats.filter(r=>r.inc>0), eCats=cats.filter(r=>r.exp>0);
+  const catRows=(arr,rn)=>arr.map((r,i)=>`<tr class="xl-indent">
+    <td class="xl-rn">${rn+i+1}</td><td>${esc(r.cat)}</td>
+    <td style="text-align:center;color:#6b7280;font-size:11px;">${r.count}</td>
+    <td class="xl-num">${r.inc>0?`<span class="pos">${money(r.inc)}</span>`:'—'}</td>
+    <td class="xl-num">${r.exp>0?`<span class="neg">${money(r.exp)}</span>`:'—'}</td>
+    <td class="xl-num ${cls(r.inc-r.exp)}">${signVal(r.inc-r.exp)}</td>
+    <td class="xl-num" style="color:#6b7280">${tot.inc>0&&r.inc>0?(r.inc/tot.inc*100).toFixed(1)+'%':tot.exp>0&&r.exp>0?(r.exp/tot.exp*100).toFixed(1)+'%':'—'}</td>
+  </tr>`).join('');
+  cb.innerHTML = `<div class="xl-wrap"><table class="xl-table">
+    <colgroup><col style="width:40px"><col style="min-width:180px"><col style="width:70px"><col style="width:126px"><col style="width:126px"><col style="width:126px"><col style="width:80px"></colgroup>
+    <thead><tr class="xl-hdr">
+      <th class="xl-rn no-sort">#</th><th>Category</th><th style="text-align:center" class="no-sort">Txns</th>
+      <th class="xl-num no-sort">Income</th><th class="xl-num no-sort">Expense</th>
+      <th class="xl-num no-sort">Net</th><th class="xl-num no-sort">% Share</th>
+    </tr></thead>
+    <tbody>
+      <tr class="xl-stmt-title"><td></td><td colspan="6">${esc(biz.name)}</td></tr>
+      <tr class="xl-stmt-sub"><td></td><td colspan="6">Category Breakdown &nbsp;|&nbsp; ${pLabel}</td></tr>
+      <tr class="xl-spacer"><td colspan="7"></td></tr>
+      ${iCats.length?`<tr class="xl-section"><td></td><td colspan="6">Income Categories</td></tr>${catRows(iCats,0)}`:''}
+      ${iCats.length&&eCats.length?`<tr class="xl-spacer"><td colspan="7"></td></tr>`:''}
+      ${eCats.length?`<tr class="xl-section"><td></td><td colspan="6">Expense Categories</td></tr>${catRows(eCats,iCats.length)}`:''}
+      ${!cats.length?`<tr><td colspan="7" style="padding:32px;text-align:center;color:#9ca3af;font-style:italic;">No transactions in this period.</td></tr>`:''}
+      <tr class="xl-spacer"><td colspan="7"></td></tr>
+      <tr class="xl-total">
+        <td class="xl-rn"></td><td>TOTALS</td>
+        <td style="text-align:center;">${ft.length}</td>
+        <td class="xl-num">${money(tot.inc)}</td>
+        <td class="xl-num">${money(tot.exp)}</td>
+        <td class="xl-num ${cls(tot.inc-tot.exp)}">${signVal(tot.inc-tot.exp)}</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table></div>`;
+}
+
+// ═══ Utils ═════════════════════════════════════════════════
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('on');
+  setTimeout(()=>el.classList.remove('on'),2500);
+}
+
+function clearAll() {
+  if (!txs.length) return;
+  if (!confirm(`Delete all ${txs.length} transactions? This cannot be undone.`)) return;
+  txs=[]; save(); toast('All data cleared.'); render();
+}
+
+function exportCSV() {
+  const ft=periodTxs();
+  if (!ft.length){ alert('No data to export.'); return; }
+  const hdr=['Date','Type','Reference','Category','Description','Amount','Notes'];
+  const rows=ft.map(t=>[t.date,t.type,t.ref||'',t.cat,t.desc,t.amount.toFixed(2),t.notes||'']);
+  const csv=[hdr,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`${biz.name.replace(/\s+/g,'_')}_${toDS(new Date())}.csv`;
+  a.click();
+}
+
+// ═══ Boot ══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', ()=>{ save(); nav('dashboard'); });
+</script>
+</body>
+</html>
