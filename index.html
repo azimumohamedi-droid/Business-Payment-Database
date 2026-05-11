@@ -9,41 +9,48 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;background:#f3f4f6;color:#111827}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;background:#f5f6fa;color:#1a1f36}
 
 /* ── App shell ─────────────────────────────────────────── */
 .app{display:flex;height:100vh;overflow:hidden}
 
 /* ── Sidebar ───────────────────────────────────────────── */
-.sb{width:232px;min-width:232px;background:#111827;display:flex;flex-direction:column;overflow-y:auto;border-right:1px solid #1f2937;flex-shrink:0}
+.sb{width:232px;min-width:232px;background:#ffffff;display:flex;flex-direction:column;overflow-y:auto;border-right:1px solid #e8eaf0;flex-shrink:0}
 .sb::-webkit-scrollbar{width:3px}
-.sb::-webkit-scrollbar-thumb{background:#374151;border-radius:2px}
+.sb::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:2px}
 
-.sb-logo{padding:16px 14px 14px;border-bottom:1px solid #1f2937;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sb-logo{padding:16px 14px 14px;border-bottom:1px solid #f0f1f5;display:flex;align-items:center;gap:10px;flex-shrink:0}
 .sb-logo svg{width:32px;height:32px;flex-shrink:0}
-.sb-logo-name{font-size:15px;font-weight:700;color:#f9fafb;line-height:1.2}
-.sb-logo-sub{font-size:10px;color:#6b7280;margin-top:1px}
+.sb-logo-name{font-size:15px;font-weight:700;color:#1a1f36;line-height:1.2}
+.sb-logo-sub{font-size:10px;color:#9ca3af;margin-top:1px}
 
-.sb-grp{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:#374151;padding:14px 14px 5px}
+.sb-create{margin:12px 14px 4px;padding:8px 12px;background:#fff;border:1.5px solid #2B5EEB;border-radius:7px;color:#2B5EEB;font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all .12s;display:flex;align-items:center;justify-content:center;gap:6px}
+.sb-create:hover{background:#2B5EEB;color:#fff}
+.sb-create svg{width:13px;height:13px;flex-shrink:0}
 
-.sb-item{display:flex;align-items:center;gap:9px;padding:7px 14px;color:#9ca3af;cursor:pointer;font-size:12.5px;font-weight:500;border-left:2px solid transparent;transition:all .12s;user-select:none}
-.sb-item:hover{color:#f9fafb;background:#1f2937}
-.sb-item.active{color:#60a5fa;background:rgba(59,130,246,.12);border-left-color:#3b82f6}
-.sb-item svg{width:14px;height:14px;flex-shrink:0;opacity:.7}
+.sb-grp{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:#9ca3af;padding:14px 14px 5px}
+
+.sb-item{display:flex;align-items:center;gap:9px;padding:7px 14px;color:#6b7280;cursor:pointer;font-size:12.5px;font-weight:500;border-left:3px solid transparent;transition:all .12s;user-select:none}
+.sb-item:hover{color:#1a1f36;background:#f5f7ff}
+.sb-item.active{color:#2B5EEB;background:#eef2fd;border-left-color:#2B5EEB}
+.sb-item svg{width:14px;height:14px;flex-shrink:0;opacity:.6}
 .sb-item.active svg{opacity:1}
 
-.sb-footer{margin-top:auto;padding:12px 14px;border-top:1px solid #1f2937}
-.sb-footer-info{font-size:10px;color:#4b5563;margin-bottom:8px}
-.btn-danger{width:100%;padding:7px;background:transparent;border:1px solid #374151;border-radius:6px;color:#6b7280;font-size:11px;cursor:pointer;transition:all .12s}
+.sb-footer{margin-top:auto;padding:12px 14px;border-top:1px solid #f0f1f5}
+.sb-footer-info{font-size:10px;color:#9ca3af;margin-bottom:8px}
+.btn-danger{width:100%;padding:7px;background:transparent;border:1px solid #e5e7eb;border-radius:6px;color:#9ca3af;font-size:11px;cursor:pointer;transition:all .12s}
 .btn-danger:hover{border-color:#dc2626;color:#dc2626;background:rgba(220,38,38,.05)}
 
 /* ── Content area ──────────────────────────────────────── */
 .content{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 
-.ch{background:#fff;border-bottom:1px solid #e5e7eb;padding:11px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
-.ch-left h2{font-size:15px;font-weight:700;color:#111827;line-height:1.2}
-.ch-left p{font-size:11px;color:#6b7280;margin-top:1px}
+.ch{background:#fff;border-bottom:1px solid #e8eaf0;padding:11px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.ch-left h2{font-size:15px;font-weight:700;color:#1a1f36;line-height:1.2}
+.ch-left p{font-size:11px;color:#9ca3af;margin-top:1px}
 .ch-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.biz-badge{display:flex;align-items:center;gap:8px}
+.biz-badge-name{font-size:12px;font-weight:600;color:#1a1f36}
+.biz-tier{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#2B5EEB;background:#eef2fd;border:1px solid #c7d5fb;border-radius:4px;padding:2px 6px}
 
 .period-sel{padding:6px 9px;background:#fff;border:1px solid #d1d5db;border-radius:6px;font-size:12px;color:#374151;cursor:pointer;outline:none}
 .period-sel:focus{border-color:#3b82f6}
@@ -94,16 +101,51 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .xl-month-cur td{font-weight:700}
 
 /* ── Dashboard ─────────────────────────────────────────── */
-.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
-.dash-card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px}
-.dash-card-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:5px}
-.dash-card-val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
-.dash-card-sub{font-size:10px;color:#9ca3af;margin-top:4px}
-.dash-card-val.pos{color:#166534}
-.dash-card-val.neg{color:#991b1b}
+.dash-page-title{font-size:28px;font-weight:800;color:#1a1f36;margin-bottom:6px;letter-spacing:-.5px}
+.dash-page-sub{font-size:13px;color:#9ca3af;margin-bottom:20px}
+
+.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.dash-card{background:#fff;border:1px solid #e8eaf0;border-radius:10px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.dash-card-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af;margin-bottom:6px}
+.dash-card-val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:#1a1f36}
+.dash-card-sub{font-size:10px;color:#b0b7c3;margin-top:5px}
+.dash-card-val.pos{color:#0e7f4f}
+.dash-card-val.neg{color:#d93025}
+
+/* Wave-style two-column mid section */
+.dash-mid{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:20px;align-items:start}
+.dash-todo{background:#fff;border:1px solid #e8eaf0;border-radius:10px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.dash-todo-title{font-size:13px;font-weight:700;color:#1a1f36;margin-bottom:14px}
+.dash-todo-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background .1s}
+.dash-todo-item:last-child{border-bottom:none}
+.dash-todo-item:hover .dash-todo-label{color:#2B5EEB}
+.dash-todo-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dash-todo-icon svg{width:15px;height:15px}
+.dash-todo-label{font-size:12.5px;font-weight:600;color:#374151}
+.dash-todo-desc{font-size:10.5px;color:#9ca3af;margin-top:1px}
+
+.dash-cf{background:#fff;border:1px solid #e8eaf0;border-radius:10px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.dash-cf-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.dash-cf-title{font-size:14px;font-weight:700;color:#1a1f36}
+.dash-cf-sub{font-size:11px;color:#9ca3af;margin-bottom:14px}
+.dash-cf-legend{display:flex;gap:14px;margin-bottom:10px}
+.dash-cf-leg-item{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#6b7280}
+.dash-cf-leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.dash-cf-wrap{position:relative;height:200px}
+
+/* P&L section */
+.dash-pl{background:#fff;border:1px solid #e8eaf0;border-radius:10px;padding:18px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.dash-pl-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.dash-pl-title{font-size:14px;font-weight:700;color:#1a1f36}
+.dash-pl-sub{font-size:11px;color:#9ca3af;margin-bottom:14px}
+.dash-pl-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+.dash-pl-stat{padding:12px 14px;border-radius:8px;border:1px solid #f0f1f5}
+.dash-pl-stat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#9ca3af;margin-bottom:5px}
+.dash-pl-stat-val{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+.dash-pl-wrap{position:relative;height:160px}
 
 .dash-charts{display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:18px}
-.dash-cc{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px}
+.dash-cc{background:#fff;border:1px solid #e8eaf0;border-radius:10px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
 .dash-cc-title{font-size:11px;font-weight:700;color:#374151;margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
 .dash-cc-wrap{position:relative;height:200px}
 
@@ -166,19 +208,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .sb-overlay.on{display:block}
 
 /* ── Sidebar close btn (mobile only) ───────────────────── */
-.sb-close{display:none;position:absolute;top:14px;right:12px;background:none;border:none;color:#6b7280;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px}
-.sb-close:hover{color:#f9fafb}
+.sb-close{display:none;position:absolute;top:14px;right:12px;background:none;border:none;color:#9ca3af;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px}
+.sb-close:hover{color:#1a1f36}
 
 /* ── Tablet ─────────────────────────────────────────────── */
 @media(max-width:860px){
   .dash-grid{grid-template-columns:1fr 1fr}
+  .dash-mid{grid-template-columns:1fr}
   .dash-charts{grid-template-columns:1fr}
+  .dash-pl-stats{grid-template-columns:1fr 1fr 1fr}
+  .biz-badge{display:none}
 }
 
 /* ── Mobile ─────────────────────────────────────────────── */
 @media(max-width:640px){
   /* Sidebar becomes a fixed drawer */
-  .sb{position:fixed;top:0;left:-240px;height:100%;z-index:200;width:240px!important;min-width:240px!important;transition:left .25s ease;box-shadow:4px 0 20px rgba(0,0,0,.3)}
+  .sb{position:fixed;top:0;left:-240px;height:100%;z-index:200;width:240px!important;min-width:240px!important;transition:left .25s ease;box-shadow:4px 0 24px rgba(0,0,0,.12)}
   .sb.open{left:0}
   .sb-close{display:block}
   .sb-logo{padding-right:40px}
@@ -201,11 +246,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
   .cb{padding:12px}
 
   /* Dashboard */
+  .dash-page-title{font-size:20px;margin-bottom:4px}
+  .dash-page-sub{font-size:12px;margin-bottom:14px}
   .dash-grid{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
   .dash-card{padding:12px}
   .dash-card-val{font-size:18px}
+  .dash-mid{grid-template-columns:1fr;gap:10px;margin-bottom:12px}
+  .dash-cf-wrap{height:170px}
+  .dash-pl-stats{grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .dash-pl-wrap{height:130px}
   .dash-charts{grid-template-columns:1fr;gap:10px;margin-bottom:12px}
   .dash-cc-wrap{height:170px}
+  .biz-badge{display:none}
 
   /* Forms → single column */
   .form-card{max-width:100%;padding:16px}
@@ -234,10 +286,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 }
 
 /* ── Bottom nav bar ─────────────────────────────────────── */
-.bot-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#111827;border-top:1px solid #1f2937;z-index:100;justify-content:space-around;padding:6px 0 max(6px,env(safe-area-inset-bottom))}
-.bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 10px;cursor:pointer;color:#6b7280;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;border:none;background:none;min-width:52px;transition:color .12s}
+.bot-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e8eaf0;z-index:100;justify-content:space-around;padding:6px 0 max(6px,env(safe-area-inset-bottom))}
+.bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 10px;cursor:pointer;color:#9ca3af;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;border:none;background:none;min-width:52px;transition:color .12s}
 .bn-item svg{width:18px;height:18px}
-.bn-item.active{color:#60a5fa}
+.bn-item.active{color:#2B5EEB}
 .bn-item:active{opacity:.7}
 
 /* Push content up so bottom nav doesn't overlap */
@@ -262,14 +314,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
   <button class="sb-close" onclick="closeSb()">×</button>
   <div class="sb-logo">
     <svg viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="7" fill="#3b82f6" opacity=".18"/>
-      <polyline points="4,24 11,15 17,18 28,7" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="28" cy="7" r="2.5" fill="#16a34a"/>
+      <rect width="32" height="32" rx="7" fill="#2B5EEB" opacity=".14"/>
+      <polyline points="4,24 11,15 17,18 28,7" stroke="#2B5EEB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="28" cy="7" r="2.5" fill="#0e7f4f"/>
     </svg>
     <div>
       <div class="sb-logo-name">BizTrack</div>
       <div class="sb-logo-sub">Payment Control</div>
     </div>
+  </div>
+
+  <div class="sb-create" onclick="nav('add')">
+    <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6.5" y1="1" x2="6.5" y2="12"/><line x1="1" y1="6.5" x2="12" y2="6.5"/></svg>
+    Create new
   </div>
 
   <div class="sb-grp">Overview</div>
@@ -343,6 +400,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
       </select>
       <button class="btn-sm btn-outline" onclick="exportCSV()">↓ CSV</button>
       <button class="btn-sm btn-dark" onclick="window.print()">⎙ Print</button>
+      <div class="biz-badge">
+        <span class="biz-badge-name" id="chBizName">My Business</span>
+        <span class="biz-tier">Starter</span>
+      </div>
     </div>
   </div>
 
@@ -405,6 +466,8 @@ function save() {
   localStorage.setItem('biz_txs', JSON.stringify(txs));
   localStorage.setItem('biz_profile', JSON.stringify(biz));
   document.getElementById('sbInfo').textContent = txs.length + ' transaction' + (txs.length !== 1 ? 's' : '');
+  const nb = document.getElementById('chBizName');
+  if(nb) nb.textContent = biz.name || 'My Business';
 }
 
 // ═══ Helpers ═══════════════════════════════════════════════
@@ -509,87 +572,206 @@ function render() {
 // ═══ DASHBOARD ═════════════════════════════════════════════
 function vDashboard(cb, ft) {
   const s = sum(ft);
-  const tod = toDS(new Date());
-  const st = sum(txs.filter(t=>t.date===tod));
-  const allS = sum(txs);
+  const period = document.getElementById('periodSel')?.value || 'month';
+  const periodLabel = {all:'All Time',year:'This Year',month:'This Month',week:'This Week',today:'Today'}[period]||'This Period';
+
+  // Build daily cash-flow data for last 30 days
+  const cfMap={};
+  const cfBase=new Date(); cfBase.setHours(0,0,0,0);
+  for(let i=29;i>=0;i--){ const d=new Date(cfBase); d.setDate(cfBase.getDate()-i); cfMap[toDS(d)]={inflow:0,outflow:0}; }
+  txs.forEach(t=>{
+    if(!cfMap[t.date]) return;
+    const a=txAmts(t);
+    cfMap[t.date].inflow+=a.paidAmt;
+    cfMap[t.date].outflow+=a.expAmt;
+  });
+  const cfDates=Object.keys(cfMap).sort();
+  const cfInflow=cfDates.map(k=>cfMap[k].inflow);
+  const cfOutflow=cfDates.map(k=>cfMap[k].outflow);
+  let cumNet=0;
+  const cfNet=cfDates.map(k=>{ cumNet+=cfMap[k].inflow-cfMap[k].outflow; return +cumNet.toFixed(2); });
+
+  // P&L monthly data for last 6 months
+  const plMap={};
+  for(let i=5;i>=0;i--){
+    const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-i);
+    plMap[`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`]={rev:0,exp:0};
+  }
+  txs.forEach(t=>{
+    const ym=t.date.slice(0,7);
+    if(!plMap[ym]) return;
+    const a=txAmts(t);
+    plMap[ym].rev+=a.paidAmt;
+    plMap[ym].exp+=a.expAmt;
+  });
+  const plKeys=Object.keys(plMap).sort();
+  const plLabels=plKeys.map(k=>{ const [y,m]=k.split('-'); return new Date(+y,+m-1,1).toLocaleDateString('en-US',{month:'short'}); });
+  const plRev=plKeys.map(k=>plMap[k].rev);
+  const plExp=plKeys.map(k=>plMap[k].exp);
+  const plNet=plKeys.map(k=>+(plMap[k].rev-plMap[k].exp).toFixed(2));
+
+  const netColor = s.net>=0 ? '#0e7f4f' : '#d93025';
 
   cb.innerHTML = `
+  <div class="dash-page-title">Dashboard</div>
+  <div class="dash-page-sub">${periodLabel} · ${biz.name}</div>
+
   <div class="dash-grid">
     <div class="dash-card">
       <div class="dash-card-lbl">Total Sales</div>
       <div class="dash-card-val pos">${money(s.saleAmt)}</div>
-      <div class="dash-card-sub">${ft.filter(t=>t.type==='income').length} sale entries</div>
+      <div class="dash-card-sub">${ft.filter(t=>t.type==='income').length} invoiced</div>
     </div>
     <div class="dash-card">
-      <div class="dash-card-lbl">Amount Collected</div>
+      <div class="dash-card-lbl">Cash Collected</div>
       <div class="dash-card-val pos">${money(s.paidAmt)}</div>
-      <div class="dash-card-sub">Cash received this period</div>
+      <div class="dash-card-sub">Received this period</div>
     </div>
     <div class="dash-card">
       <div class="dash-card-lbl">Amount Owed</div>
-      <div class="dash-card-val ${s.owed>0?'neg':'pos'}">${money(s.owed)}</div>
+      <div class="dash-card-val ${s.owed>0?'neg':''}">${money(s.owed)}</div>
       <div class="dash-card-sub">Accounts receivable</div>
     </div>
     <div class="dash-card">
       <div class="dash-card-lbl">Net Income</div>
       <div class="dash-card-val ${cls(s.net)}">${signVal(s.net)}</div>
-      <div class="dash-card-sub">Collected − ${money(s.expAmt)} expenses</div>
+      <div class="dash-card-sub">After ${money(s.expAmt)} expenses</div>
     </div>
   </div>
-  <div class="dash-charts">
-    <div class="dash-cc">
-      <div class="dash-cc-title">Net Balance Trend — Last 30 Days</div>
-      <div class="dash-cc-wrap"><canvas id="cTrend"></canvas></div>
+
+  <div class="dash-mid">
+    <div class="dash-todo">
+      <div class="dash-todo-title">Things You Can Do</div>
+      <div class="dash-todo-item" onclick="nav('add')">
+        <div class="dash-todo-icon" style="background:#eef2fd">
+          <svg viewBox="0 0 15 15" fill="none" stroke="#2B5EEB" stroke-width="2" stroke-linecap="round"><line x1="7.5" y1="1" x2="7.5" y2="14"/><line x1="1" y1="7.5" x2="14" y2="7.5"/></svg>
+        </div>
+        <div><div class="dash-todo-label">Record a Transaction</div><div class="dash-todo-desc">Add a sale or expense entry</div></div>
+      </div>
+      <div class="dash-todo-item" onclick="nav('ledger')">
+        <div class="dash-todo-icon" style="background:#f0fdf4">
+          <svg viewBox="0 0 15 15" fill="none" stroke="#0e7f4f" stroke-width="1.8" stroke-linecap="round"><rect x="1" y="1" width="13" height="13" rx="1.5"/><line x1="1" y1="5" x2="14" y2="5"/><line x1="1" y1="9" x2="14" y2="9"/><line x1="5" y1="1" x2="5" y2="14"/></svg>
+        </div>
+        <div><div class="dash-todo-label">View Sales Ledger</div><div class="dash-todo-desc">Daily grouped transactions</div></div>
+      </div>
+      <div class="dash-todo-item" onclick="nav('income')">
+        <div class="dash-todo-icon" style="background:#fff7ed">
+          <svg viewBox="0 0 15 15" fill="none" stroke="#c2410c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,12 5,7 9,9 14,3"/></svg>
+        </div>
+        <div><div class="dash-todo-label">Income Statement</div><div class="dash-todo-desc">Profit &amp; Loss summary</div></div>
+      </div>
+      <div class="dash-todo-item" onclick="nav('balsheet')">
+        <div class="dash-todo-icon" style="background:#faf5ff">
+          <svg viewBox="0 0 15 15" fill="none" stroke="#7c3aed" stroke-width="1.6" stroke-linecap="round"><rect x="1" y="1" width="13" height="13" rx="1.5"/><line x1="7.5" y1="1" x2="7.5" y2="14"/><line x1="1" y1="6" x2="14" y2="6"/><line x1="1" y1="10.5" x2="14" y2="10.5"/></svg>
+        </div>
+        <div><div class="dash-todo-label">Balance Sheet</div><div class="dash-todo-desc">Assets, liabilities &amp; equity</div></div>
+      </div>
+      <div class="dash-todo-item" onclick="nav('profile')">
+        <div class="dash-todo-icon" style="background:#fef2f2">
+          <svg viewBox="0 0 15 15" fill="none" stroke="#dc2626" stroke-width="1.6" stroke-linecap="round"><circle cx="7.5" cy="5" r="2.5"/><path d="M2 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>
+        </div>
+        <div><div class="dash-todo-label">Business Profile</div><div class="dash-todo-desc">Update your company details</div></div>
+      </div>
     </div>
-    <div class="dash-cc">
-      <div class="dash-cc-title">Sales vs Collected vs Owed</div>
-      <div class="dash-cc-wrap"><canvas id="cDonut"></canvas></div>
+
+    <div class="dash-cf">
+      <div class="dash-cf-hdr">
+        <div class="dash-cf-title">Cash Flow</div>
+      </div>
+      <div class="dash-cf-sub">Last 30 days · inflow vs outflow vs cumulative net</div>
+      <div class="dash-cf-legend">
+        <div class="dash-cf-leg-item"><div class="dash-cf-leg-dot" style="background:#4caf77"></div>Inflow</div>
+        <div class="dash-cf-leg-item"><div class="dash-cf-leg-dot" style="background:#c8ccd6"></div>Outflow</div>
+        <div class="dash-cf-leg-item"><div class="dash-cf-leg-dot" style="background:#1a1f36;border-radius:50%"></div>Net change</div>
+      </div>
+      <div class="dash-cf-wrap"><canvas id="cCashFlow"></canvas></div>
     </div>
   </div>
+
+  <div class="dash-pl">
+    <div class="dash-pl-hdr">
+      <div class="dash-pl-title">Profit And Loss</div>
+    </div>
+    <div class="dash-pl-sub">Last 6 months — revenue, expenses, net</div>
+    <div class="dash-pl-stats">
+      <div class="dash-pl-stat" style="border-color:#d1fae5">
+        <div class="dash-pl-stat-lbl">Revenue</div>
+        <div class="dash-pl-stat-val" style="color:#0e7f4f">${money(s.paidAmt)}</div>
+      </div>
+      <div class="dash-pl-stat" style="border-color:#fee2e2">
+        <div class="dash-pl-stat-lbl">Expenses</div>
+        <div class="dash-pl-stat-val" style="color:#d93025">${money(s.expAmt)}</div>
+      </div>
+      <div class="dash-pl-stat" style="border-color:${s.net>=0?'#d1fae5':'#fee2e2'}">
+        <div class="dash-pl-stat-lbl">Net Income</div>
+        <div class="dash-pl-stat-val" style="color:${netColor}">${signVal(s.net)}</div>
+      </div>
+    </div>
+    <div class="dash-pl-wrap"><canvas id="cPL"></canvas></div>
+  </div>
+
   <div class="view-title">Recent Transactions</div>
   <div class="xl-wrap">${recentTable(ft.slice(0,12))}</div>`;
 
-  // Trend chart
-  const map={};
-  const base=new Date(); base.setHours(0,0,0,0);
-  for(let i=29;i>=0;i--){ const d=new Date(base); d.setDate(base.getDate()-i); map[toDS(d)]={paid:0,exp:0}; }
-  txs.forEach(t=>{
-    if(!map[t.date]) return;
-    const a=txAmts(t);
-    map[t.date].paid+=a.paidAmt;
-    map[t.date].exp+=a.expAmt;
-  });
-  let cum=0;
-  const tData=Object.keys(map).sort().map(k=>{ cum+=map[k].paid-map[k].exp; return{x:k,y:+cum.toFixed(2)}; });
-  const pos=(tData[tData.length-1]?.y??0)>=0;
-  const lc=pos?'#16a34a':'#dc2626';
-  const tc=document.getElementById('cTrend')?.getContext('2d');
-  if(tc){
-    const g=tc.createLinearGradient(0,0,0,200);
-    g.addColorStop(0,pos?'rgba(22,163,74,.22)':'rgba(220,38,38,.22)');
-    g.addColorStop(1,'rgba(0,0,0,0)');
-    charts.trend=new Chart(tc,{
-      type:'line',
-      data:{datasets:[{data:tData,borderColor:lc,backgroundColor:g,borderWidth:2,fill:true,tension:.35,pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:lc}]},
-      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-        plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2540',borderColor:'#374151',borderWidth:1,titleColor:'#9ca3af',bodyColor:'#f3f4f6',callbacks:{title:i=>sd(i[0].raw.x),label:i=>`Net Balance: ${money(i.raw.y)}`}}},
-        scales:{x:{type:'time',time:{unit:'day'},grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',font:{size:10},maxTicksLimit:7}},
-          y:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',font:{size:10},callback:v=>'$'+v.toLocaleString()}}}}
+  // ── Cash Flow chart (bar + line overlay)
+  const cfCtx = document.getElementById('cCashFlow')?.getContext('2d');
+  if(cfCtx){
+    const cfLabels = cfDates.map(k => k.slice(5)); // MM-DD
+    charts.cashflow = new Chart(cfCtx, {
+      type: 'bar',
+      data: {
+        labels: cfLabels,
+        datasets: [
+          { label:'Inflow', data:cfInflow, backgroundColor:'rgba(76,175,119,.75)', borderRadius:3, borderWidth:0, order:2 },
+          { label:'Outflow', data:cfOutflow, backgroundColor:'rgba(200,204,214,.8)', borderRadius:3, borderWidth:0, order:2 },
+          { label:'Net Change', data:cfNet, type:'line', borderColor:'#1a1f36', backgroundColor:'transparent',
+            borderWidth:2, pointRadius:3, pointBackgroundColor:'#1a1f36', pointStyle:'rectRot',
+            pointRadius:4, tension:.3, order:1 }
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{display:false},
+          tooltip:{backgroundColor:'#fff',borderColor:'#e8eaf0',borderWidth:1,titleColor:'#1a1f36',bodyColor:'#6b7280',
+            callbacks:{label:i=>`  ${i.dataset.label}: ${money(i.raw)}`}}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#b0b7c3',font:{size:9},maxTicksLimit:10}},
+          y:{grid:{color:'#f3f4f6'},ticks:{color:'#b0b7c3',font:{size:9},callback:v=>'$'+v.toLocaleString()},border:{display:false}}
+        }
+      }
     });
   }
-  // Bar chart: Sales vs Collected vs Owed
-  const dc=document.getElementById('cDonut')?.getContext('2d');
-  if(dc){
-    charts.donut=new Chart(dc,{
+
+  // ── P&L bar chart
+  const plCtx = document.getElementById('cPL')?.getContext('2d');
+  if(plCtx){
+    charts.pl = new Chart(plCtx, {
       type:'bar',
-      data:{labels:['Sales','Collected','Owed','Expenses'],
-        datasets:[{data:[s.saleAmt,s.paidAmt,s.owed,s.expAmt],
-          backgroundColor:['#3b82f6','#16a34a','#f59e0b','#dc2626'],
-          borderRadius:5,borderWidth:0}]},
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2540',borderColor:'#374151',borderWidth:1,titleColor:'#9ca3af',bodyColor:'#f3f4f6',callbacks:{label:i=>`  ${i.label}: ${money(i.raw)}`}}},
-        scales:{x:{grid:{display:false},ticks:{color:'#6b7280',font:{size:10}}},
-          y:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',font:{size:10},callback:v=>'$'+v.toLocaleString()}}}}
+      data:{
+        labels:plLabels,
+        datasets:[
+          { label:'Revenue', data:plRev, backgroundColor:'rgba(76,175,119,.75)', borderRadius:4, borderWidth:0 },
+          { label:'Expenses', data:plExp, backgroundColor:'rgba(217,48,37,.65)', borderRadius:4, borderWidth:0 },
+          { label:'Net', data:plNet, type:'line', borderColor:'#2B5EEB', backgroundColor:'rgba(43,94,235,.08)',
+            borderWidth:2, pointRadius:4, pointBackgroundColor:'#2B5EEB', fill:true, tension:.3 }
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{display:true,position:'top',align:'end',labels:{boxWidth:10,font:{size:10},color:'#6b7280',usePointStyle:true,padding:14}},
+          tooltip:{backgroundColor:'#fff',borderColor:'#e8eaf0',borderWidth:1,titleColor:'#1a1f36',bodyColor:'#6b7280',
+            callbacks:{label:i=>`  ${i.dataset.label}: ${money(i.raw)}`}}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#b0b7c3',font:{size:10}}},
+          y:{grid:{color:'#f3f4f6'},ticks:{color:'#b0b7c3',font:{size:10},callback:v=>'$'+v.toLocaleString()},border:{display:false}}
+        }
+      }
     });
   }
 }
