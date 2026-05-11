@@ -533,7 +533,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 <script>
 // ═══ Data ══════════════════════════════════════════════════
 let txs = JSON.parse(localStorage.getItem('biz_txs') || '[]');
-let biz = { name:'My Business', type:'Sole Trader', industry:'', currency:'USD', yearStart:'January', address:'', phone:'', email:'', ...JSON.parse(localStorage.getItem('biz_profile') || '{}') };
+let biz = { name:'My Business', type:'Sole Trader', industry:'', currency:'USD', yearStart:'January', address:'', phone:'', email:'', smsEnabled:false, smsPhone:'', ...JSON.parse(localStorage.getItem('biz_profile') || '{}') };
 
 // Migrate old transactions that lack saleAmt/paidAmt fields
 txs = txs.map(t => {
@@ -1056,6 +1056,36 @@ function vProfile(cb) {
       <div class="fg full"><label>Email</label><input class="fi" id="bEmail" value="${esc(biz.email)}" placeholder="business@example.com"></div>
     </div>
     <button class="btn-submit green" onclick="saveProfile()">Save Profile</button>
+  </div>
+
+  <div class="form-card" style="margin-top:18px;max-width:580px">
+    <div class="form-hdr" style="display:flex;align-items:center;gap:10px">
+      <svg viewBox="0 0 20 20" fill="none" stroke="#2B5EEB" stroke-width="1.7" stroke-linecap="round" style="width:18px;height:18px;flex-shrink:0"><rect x="4" y="1" width="12" height="18" rx="2"/><line x1="8" y1="15" x2="12" y2="15"/></svg>
+      SMS Transaction Alerts
+    </div>
+    <div style="background:${biz.smsEnabled?'#f0fdf4':'#f8f9ff'};border:1px solid ${biz.smsEnabled?'#bbf7d0':'#e0e7ff'};border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#6b7280;line-height:1.6">
+      When enabled, a text message is sent to your phone <b>automatically</b> after every transaction you record.
+      Requires a free <a href="https://www.twilio.com/try-twilio" target="_blank" style="color:#2B5EEB">Twilio account</a> — add credentials to <code>.env</code> and run <code>python3 server.py</code>.
+    </div>
+    <div class="form-grid">
+      <div class="fg full" style="flex-direction:row;align-items:center;justify-content:space-between;background:#f5f7ff;border:1px solid #e0e7ff;border-radius:8px;padding:12px 16px">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#1a1f36">Enable SMS alerts</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:2px">Send a text after each transaction</div>
+        </div>
+        <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+          <input type="checkbox" id="bSmsEnabled" ${biz.smsEnabled?'checked':''} style="opacity:0;width:0;height:0">
+          <span onclick="document.getElementById('bSmsEnabled').click()" style="position:absolute;cursor:pointer;inset:0;background:${biz.smsEnabled?'#2B5EEB':'#d1d5db'};border-radius:24px;transition:.2s">
+            <span style="position:absolute;height:18px;width:18px;left:${biz.smsEnabled?'23px':'3px'};bottom:3px;background:#fff;border-radius:50%;transition:.2s"></span>
+          </span>
+        </label>
+      </div>
+      <div class="fg full">
+        <label>SMS Phone Number <span style="color:#9ca3af;font-size:9px;font-weight:400">(include country code)</span></label>
+        <input class="fi" id="bSmsPhone" value="${esc(biz.smsPhone)}" placeholder="+1 555 000 0000" type="tel">
+      </div>
+    </div>
+    <button class="btn-submit" onclick="saveSmsSettings()" style="background:#2B5EEB">Save SMS Settings</button>
   </div>`;
 }
 
@@ -1069,6 +1099,17 @@ function saveProfile() {
   biz.address = document.getElementById('bAddr').value.trim();
   biz.email   = document.getElementById('bEmail').value.trim();
   save(); toast('Profile saved ✓');
+}
+
+function saveSmsSettings() {
+  const phone = document.getElementById('bSmsPhone').value.trim();
+  const enabled = document.getElementById('bSmsEnabled').checked;
+  if (enabled && !phone) { toast('Enter a phone number to enable SMS'); return; }
+  biz.smsEnabled = enabled;
+  biz.smsPhone   = phone;
+  save();
+  toast(enabled ? 'SMS alerts enabled ✓ — transactions will trigger a text to ' + phone : 'SMS alerts disabled');
+  vProfile(document.getElementById('cb'));
 }
 
 // ═══ ADD TRANSACTION ═══════════════════════════════════════
@@ -1128,19 +1169,46 @@ function submitTx() {
   if (!cat){ alert('Select a category.'); return; }
   if (!desc){ alert('Description required.'); return; }
 
+  let newTx;
   if (addType==='income') {
     const saleAmt=parseFloat(document.getElementById('fSaleAmt').value);
     const paidAmt=parseFloat(document.getElementById('fPaidAmt').value)||0;
     if (!saleAmt||saleAmt<=0){ alert('Enter a valid sale amount.'); return; }
     if (paidAmt<0){ alert('Paid amount cannot be negative.'); return; }
     if (paidAmt>saleAmt){ alert('Paid amount cannot exceed the sale amount.'); return; }
-    txs.unshift({id:uid(),date,type:'income',cat,ref,desc,notes,saleAmt,paidAmt,amount:saleAmt});
+    newTx={id:uid(),date,type:'income',cat,ref,desc,notes,saleAmt,paidAmt,amount:saleAmt};
   } else {
     const amount=parseFloat(document.getElementById('fAmt').value);
     if (!amount||amount<=0){ alert('Enter a valid amount.'); return; }
-    txs.unshift({id:uid(),date,type:'expense',cat,ref,desc,notes,amount,saleAmt:0,paidAmt:0});
+    newTx={id:uid(),date,type:'expense',cat,ref,desc,notes,amount,saleAmt:0,paidAmt:0};
   }
+  txs.unshift(newTx);
   save(); toast('Transaction added ✓'); nav('ledger');
+  sendSmsAlert(newTx);
+}
+
+// ═══ SMS ALERT ═════════════════════════════════════════════
+async function sendSmsAlert(tx) {
+  if (!biz.smsEnabled || !biz.smsPhone) return;
+  const a = txAmts(tx);
+  let msg;
+  if (tx.type === 'income') {
+    msg = `BizTrack ✓ New Sale\n${tx.desc}${tx.ref?' ('+tx.ref+')':''}\nSale: ${money(a.saleAmt)}  Paid: ${money(a.paidAmt)}  Owed: ${money(a.owed)}\nDate: ${tx.date}\n— ${biz.name}`;
+  } else {
+    msg = `BizTrack ✓ Expense\n${tx.desc}\nAmount: ${money(a.expAmt)}  Category: ${tx.cat}\nDate: ${tx.date}\n— ${biz.name}`;
+  }
+  try {
+    const res = await fetch('/api/send-sms', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ to: biz.smsPhone, message: msg })
+    });
+    const data = await res.json();
+    if (data.success) toast('SMS sent to ' + biz.smsPhone + ' ✓');
+    else toast('SMS failed: ' + (data.error || 'unknown error'));
+  } catch(e) {
+    toast('SMS unavailable — is server.py running?');
+  }
 }
 
 // ═══ SALES LEDGER (daily grouped) ══════════════════════════
