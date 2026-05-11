@@ -149,6 +149,56 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .dash-cc-title{font-size:11px;font-weight:700;color:#374151;margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
 .dash-cc-wrap{position:relative;height:200px}
 
+/* Income vs Expense chart */
+.dash-ie{background:#fff;border:1px solid #e8eaf0;border-radius:10px;padding:18px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.dash-ie-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.dash-ie-legend{display:flex;gap:16px}
+.dash-ie-leg{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#6b7280}
+.dash-ie-leg-dot{width:12px;height:10px;border-radius:2px;flex-shrink:0}
+.dash-ie-toggle{display:flex;gap:2px}
+.dash-ie-tog-btn{font-size:11px;font-weight:600;padding:3px 11px;border-radius:5px;border:none;cursor:pointer;color:#9ca3af;background:transparent;transition:color .12s}
+.dash-ie-tog-btn.on{color:#2B5EEB}
+.dash-ie-wrap{position:relative;height:230px}
+
+/* Payable/Owing + Net Income row */
+.dash-po-row{display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:20px;align-items:start}
+
+.dash-po{background:#fff;border:1px solid #e8eaf0;border-radius:10px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.dash-po-title{font-size:17px;font-weight:700;color:#1a1f36;margin-bottom:16px}
+.dash-po-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.dash-po-col-hdr{font-size:12.5px;font-weight:700;color:#1a1f36;padding-bottom:8px;border-bottom:2px solid #e8eaf0;margin-bottom:2px}
+.dash-po-li{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12.5px}
+.dash-po-li:last-child{border-bottom:none}
+.dash-po-li .lbl-blue{color:#2B5EEB;font-weight:600}
+.dash-po-li .lbl-gray{color:#6b7280}
+.dash-po-li .val{font-weight:600;font-variant-numeric:tabular-nums;color:#1a1f36}
+
+.dash-ni{background:#fff;border:1px solid #e8eaf0;border-radius:10px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.dash-ni-title{font-size:17px;font-weight:700;color:#1a1f36;margin-bottom:16px}
+.dash-ni-tbl{width:100%;border-collapse:collapse}
+.dash-ni-tbl th{font-size:11px;font-weight:700;color:#6b7280;padding:7px 10px;border-bottom:2px solid #e8eaf0;text-align:right}
+.dash-ni-tbl th:first-child{text-align:left}
+.dash-ni-tbl td{font-size:13px;padding:9px 10px;border-bottom:1px solid #f3f4f6;color:#374151}
+.dash-ni-tbl td:not(:first-child){text-align:right;font-weight:700;color:#2B5EEB;font-variant-numeric:tabular-nums}
+.dash-ni-tbl tr.ni-alt td{background:#f5f7ff}
+.dash-ni-tbl tr.ni-net td{font-weight:800;border-top:2px solid #e8eaf0;border-bottom:none;font-size:13.5px}
+
+/* Expense Breakdown */
+.dash-exp{background:#fff;border:1px solid #e8eaf0;border-radius:10px;padding:18px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.dash-exp-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.dash-exp-title{font-size:14px;font-weight:700;color:#1a1f36}
+.dash-exp-toggle{display:flex;gap:2px}
+.dash-exp-tog-btn{font-size:11px;font-weight:600;padding:3px 11px;border-radius:5px;border:none;cursor:pointer;color:#9ca3af;background:transparent;transition:color .12s}
+.dash-exp-tog-btn.on{color:#2B5EEB}
+.dash-exp-body{display:grid;grid-template-columns:240px 1fr;gap:24px;align-items:center}
+.dash-exp-wrap{position:relative;height:230px}
+.dash-exp-leg-list{display:flex;flex-direction:column;gap:7px}
+.dash-exp-leg-item{display:flex;align-items:center;gap:8px;font-size:12px}
+.dash-exp-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dash-exp-leg-lbl{flex:1;color:#374151}
+.dash-exp-leg-pct{font-size:10.5px;font-weight:700;color:#9ca3af;min-width:36px;text-align:right}
+.dash-exp-leg-val{font-size:10.5px;color:#6b7280;font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
+
 .view-title{font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;margin-top:4px}
 
 /* ── Forms ─────────────────────────────────────────────── */
@@ -217,6 +267,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
   .dash-mid{grid-template-columns:1fr}
   .dash-charts{grid-template-columns:1fr}
   .dash-pl-stats{grid-template-columns:1fr 1fr 1fr}
+  .dash-po-row{grid-template-columns:1fr}
+  .dash-exp-body{grid-template-columns:1fr;justify-items:center}
   .biz-badge{display:none}
 }
 
@@ -257,6 +309,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
   .dash-pl-wrap{height:130px}
   .dash-charts{grid-template-columns:1fr;gap:10px;margin-bottom:12px}
   .dash-cc-wrap{height:170px}
+  .dash-ie-wrap{height:180px}
+  .dash-po-row{grid-template-columns:1fr;gap:12px}
+  .dash-po-cols{grid-template-columns:1fr;gap:12px}
+  .dash-exp-body{grid-template-columns:1fr}
+  .dash-exp-wrap{height:200px}
   .biz-badge{display:none}
 
   /* Forms → single column */
@@ -575,7 +632,7 @@ function vDashboard(cb, ft) {
   const period = document.getElementById('periodSel')?.value || 'month';
   const periodLabel = {all:'All Time',year:'This Year',month:'This Month',week:'This Week',today:'Today'}[period]||'This Period';
 
-  // Build daily cash-flow data for last 30 days
+  // ── Cash Flow: last 30 days
   const cfMap={};
   const cfBase=new Date(); cfBase.setHours(0,0,0,0);
   for(let i=29;i>=0;i--){ const d=new Date(cfBase); d.setDate(cfBase.getDate()-i); cfMap[toDS(d)]={inflow:0,outflow:0}; }
@@ -591,7 +648,7 @@ function vDashboard(cb, ft) {
   let cumNet=0;
   const cfNet=cfDates.map(k=>{ cumNet+=cfMap[k].inflow-cfMap[k].outflow; return +cumNet.toFixed(2); });
 
-  // P&L monthly data for last 6 months
+  // ── P&L: last 6 months
   const plMap={};
   for(let i=5;i>=0;i--){
     const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-i);
@@ -601,8 +658,7 @@ function vDashboard(cb, ft) {
     const ym=t.date.slice(0,7);
     if(!plMap[ym]) return;
     const a=txAmts(t);
-    plMap[ym].rev+=a.paidAmt;
-    plMap[ym].exp+=a.expAmt;
+    plMap[ym].rev+=a.paidAmt; plMap[ym].exp+=a.expAmt;
   });
   const plKeys=Object.keys(plMap).sort();
   const plLabels=plKeys.map(k=>{ const [y,m]=k.split('-'); return new Date(+y,+m-1,1).toLocaleDateString('en-US',{month:'short'}); });
@@ -610,7 +666,61 @@ function vDashboard(cb, ft) {
   const plExp=plKeys.map(k=>plMap[k].exp);
   const plNet=plKeys.map(k=>+(plMap[k].rev-plMap[k].exp).toFixed(2));
 
-  const netColor = s.net>=0 ? '#0e7f4f' : '#d93025';
+  // ── Income vs Expense: last N months
+  const ieN = window._dashIEMonths || 12;
+  const ieMap={};
+  for(let i=ieN-1;i>=0;i--){
+    const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-i);
+    ieMap[`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`]={inc:0,exp:0};
+  }
+  txs.forEach(t=>{
+    const ym=t.date.slice(0,7);
+    if(!ieMap[ym]) return;
+    const a=txAmts(t);
+    ieMap[ym].inc+=a.paidAmt; ieMap[ym].exp+=a.expAmt;
+  });
+  const ieKeys=Object.keys(ieMap).sort();
+  const ieLabels=ieKeys.map(k=>{ const [y,m]=k.split('-'); return new Date(+y,+m-1,1).toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
+  const ieInc=ieKeys.map(k=>ieMap[k].inc);
+  const ieExp=ieKeys.map(k=>ieMap[k].exp);
+
+  // ── AR Aging (invoices payable to you — 30-day net terms assumed)
+  const today=new Date(); today.setHours(0,0,0,0);
+  const ar={due:0,d30:0,d60:0,d90:0,d90p:0};
+  txs.forEach(t=>{
+    if(t.type!=='income') return;
+    const a=txAmts(t); if(a.owed<=0) return;
+    const due=new Date(parseDL(t.date)); due.setDate(due.getDate()+30);
+    const late=Math.floor((today-due)/(86400000));
+    if(late<=0)       ar.due +=a.owed;
+    else if(late<=30) ar.d30 +=a.owed;
+    else if(late<=60) ar.d60 +=a.owed;
+    else if(late<=90) ar.d90 +=a.owed;
+    else              ar.d90p+=a.owed;
+  });
+
+  // ── Net Income: fiscal year comparison
+  const curYear=new Date().getFullYear();
+  const prevYear=curYear-1;
+  const fySum=yr=>sum(txs.filter(t=>t.date.startsWith(yr+'')));
+  const fyCur=fySum(curYear);
+  const fyPrev=fySum(prevYear);
+
+  // ── Expense Breakdown by category
+  const expPer=window._dashExpPeriod||'month';
+  const now2=new Date();
+  const expTxs=txs.filter(t=>{
+    if(t.type!=='expense') return false;
+    if(expPer==='year') return t.date.startsWith(now2.getFullYear()+'');
+    return t.date.slice(0,7)===`${now2.getFullYear()}-${String(now2.getMonth()+1).padStart(2,'0')}`;
+  });
+  const expByCat={};
+  expTxs.forEach(t=>{ expByCat[t.cat]=(expByCat[t.cat]||0)+(t.amount||0); });
+  const expCatKeys=Object.keys(expByCat).sort((a,b)=>expByCat[b]-expByCat[a]);
+  const expTotal=expCatKeys.reduce((s,k)=>s+expByCat[k],0);
+  const PIE_COLORS=['#4caf77','#2B5EEB','#9ca3af','#f59e0b','#7c3aed','#dc2626','#0ea5e9','#d97706','#ec4899'];
+
+  const netColor=s.net>=0?'#0e7f4f':'#d93025';
 
   cb.innerHTML = `
   <div class="dash-page-title">Dashboard</div>
@@ -675,9 +785,7 @@ function vDashboard(cb, ft) {
     </div>
 
     <div class="dash-cf">
-      <div class="dash-cf-hdr">
-        <div class="dash-cf-title">Cash Flow</div>
-      </div>
+      <div class="dash-cf-hdr"><div class="dash-cf-title">Cash Flow</div></div>
       <div class="dash-cf-sub">Last 30 days · inflow vs outflow vs cumulative net</div>
       <div class="dash-cf-legend">
         <div class="dash-cf-leg-item"><div class="dash-cf-leg-dot" style="background:#4caf77"></div>Inflow</div>
@@ -689,9 +797,7 @@ function vDashboard(cb, ft) {
   </div>
 
   <div class="dash-pl">
-    <div class="dash-pl-hdr">
-      <div class="dash-pl-title">Profit And Loss</div>
-    </div>
+    <div class="dash-pl-hdr"><div class="dash-pl-title">Profit And Loss</div></div>
     <div class="dash-pl-sub">Last 6 months — revenue, expenses, net</div>
     <div class="dash-pl-stats">
       <div class="dash-pl-stat" style="border-color:#d1fae5">
@@ -710,69 +816,173 @@ function vDashboard(cb, ft) {
     <div class="dash-pl-wrap"><canvas id="cPL"></canvas></div>
   </div>
 
+  <!-- Income vs Expense chart -->
+  <div class="dash-ie">
+    <div class="dash-ie-hdr">
+      <div class="dash-ie-legend">
+        <div class="dash-ie-leg"><div class="dash-ie-leg-dot" style="background:#4caf77"></div>Income</div>
+        <div class="dash-ie-leg"><div class="dash-ie-leg-dot" style="background:#9ca3af"></div>Expense</div>
+      </div>
+      <div class="dash-ie-toggle">
+        <button class="dash-ie-tog-btn${ieN===12?' on':''}" onclick="window._dashIEMonths=12;render()">Last 12 Months</button>
+        <button class="dash-ie-tog-btn${ieN===24?' on':''}" onclick="window._dashIEMonths=24;render()">Last 24 Months</button>
+      </div>
+    </div>
+    <div class="dash-ie-wrap"><canvas id="cIE"></canvas></div>
+  </div>
+
+  <!-- Payable & Owing + Net Income -->
+  <div class="dash-po-row">
+    <div class="dash-po">
+      <div class="dash-po-title">Payable &amp; Owing</div>
+      <div class="dash-po-cols">
+        <div>
+          <div class="dash-po-col-hdr">Invoices payable to you</div>
+          <div class="dash-po-li"><span class="lbl-blue">Coming Due</span><span class="val">${money(ar.due)}</span></div>
+          <div class="dash-po-li"><span class="lbl-gray">1–30 days overdue</span><span class="val">${money(ar.d30)}</span></div>
+          <div class="dash-po-li"><span class="lbl-gray">31–60 days overdue</span><span class="val">${money(ar.d60)}</span></div>
+          <div class="dash-po-li"><span class="lbl-gray">61–90 days overdue</span><span class="val">${money(ar.d90)}</span></div>
+          <div class="dash-po-li"><span class="lbl-gray">&gt; 90 days overdue</span><span class="val">${money(ar.d90p)}</span></div>
+        </div>
+        <div>
+          <div class="dash-po-col-hdr">Bills you owe</div>
+          <div class="dash-po-li"><span class="lbl-blue">Coming Due</span><span class="val">${money(0)}</span></div>
+          <div class="dash-po-li"><span class="lbl-gray">1–30 days overdue</span><span class="val">${money(0)}</span></div>
+          <div class="dash-po-li"><span class="lbl-gray">31–60 days overdue</span><span class="val">${money(0)}</span></div>
+          <div class="dash-po-li"><span class="lbl-gray">61–90 days overdue</span><span class="val">${money(0)}</span></div>
+          <div class="dash-po-li"><span class="lbl-gray">&gt; 90 days overdue</span><span class="val">${money(0)}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-ni">
+      <div class="dash-ni-title">Net Income</div>
+      <table class="dash-ni-tbl">
+        <thead><tr>
+          <th>Fiscal Year</th>
+          <th>${prevYear}</th>
+          <th>${curYear}</th>
+        </tr></thead>
+        <tbody>
+          <tr class="ni-alt"><td>Income</td>
+            <td>${money(fyPrev.paidAmt)}</td>
+            <td>${money(fyCur.paidAmt)}</td>
+          </tr>
+          <tr><td>Expense</td>
+            <td>${money(fyPrev.expAmt)}</td>
+            <td>${money(fyCur.expAmt)}</td>
+          </tr>
+          <tr class="ni-net"><td>Net Income</td>
+            <td style="color:${fyPrev.net>=0?'#2B5EEB':'#d93025'}">${signVal(fyPrev.net)}</td>
+            <td style="color:${fyCur.net>=0?'#2B5EEB':'#d93025'}">${signVal(fyCur.net)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Expense Breakdown -->
+  <div class="dash-exp">
+    <div class="dash-exp-hdr">
+      <div class="dash-exp-title">Expense Breakdown</div>
+      <div class="dash-exp-toggle">
+        <button class="dash-exp-tog-btn${expPer==='month'?' on':''}" onclick="window._dashExpPeriod='month';render()">This Month</button>
+        <button class="dash-exp-tog-btn${expPer==='year'?' on':''}" onclick="window._dashExpPeriod='year';render()">This Year</button>
+      </div>
+    </div>
+    ${expTotal>0 ? `
+    <div class="dash-exp-body">
+      <div class="dash-exp-wrap"><canvas id="cExpBreak"></canvas></div>
+      <div class="dash-exp-leg-list">
+        ${expCatKeys.map((k,i)=>{
+          const pct=((expByCat[k]/expTotal)*100).toFixed(1);
+          return `<div class="dash-exp-leg-item">
+            <div class="dash-exp-leg-dot" style="background:${PIE_COLORS[i%PIE_COLORS.length]}"></div>
+            <span class="dash-exp-leg-lbl">${esc(k)}</span>
+            <span class="dash-exp-leg-val">${money(expByCat[k])}</span>
+            <span class="dash-exp-leg-pct">${pct}%</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : `<div style="padding:32px;text-align:center;color:#9ca3af;font-style:italic;">No expense data for this period. <a onclick="nav('add')" style="color:#2B5EEB;cursor:pointer">Add an expense →</a></div>`}
+  </div>
+
   <div class="view-title">Recent Transactions</div>
   <div class="xl-wrap">${recentTable(ft.slice(0,12))}</div>`;
 
-  // ── Cash Flow chart (bar + line overlay)
-  const cfCtx = document.getElementById('cCashFlow')?.getContext('2d');
+  // ── Cash Flow chart
+  const cfCtx=document.getElementById('cCashFlow')?.getContext('2d');
   if(cfCtx){
-    const cfLabels = cfDates.map(k => k.slice(5)); // MM-DD
-    charts.cashflow = new Chart(cfCtx, {
-      type: 'bar',
-      data: {
-        labels: cfLabels,
-        datasets: [
-          { label:'Inflow', data:cfInflow, backgroundColor:'rgba(76,175,119,.75)', borderRadius:3, borderWidth:0, order:2 },
-          { label:'Outflow', data:cfOutflow, backgroundColor:'rgba(200,204,214,.8)', borderRadius:3, borderWidth:0, order:2 },
-          { label:'Net Change', data:cfNet, type:'line', borderColor:'#1a1f36', backgroundColor:'transparent',
-            borderWidth:2, pointRadius:3, pointBackgroundColor:'#1a1f36', pointStyle:'rectRot',
-            pointRadius:4, tension:.3, order:1 }
-        ]
-      },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        interaction:{mode:'index',intersect:false},
-        plugins:{
-          legend:{display:false},
-          tooltip:{backgroundColor:'#fff',borderColor:'#e8eaf0',borderWidth:1,titleColor:'#1a1f36',bodyColor:'#6b7280',
-            callbacks:{label:i=>`  ${i.dataset.label}: ${money(i.raw)}`}}
-        },
-        scales:{
-          x:{grid:{display:false},ticks:{color:'#b0b7c3',font:{size:9},maxTicksLimit:10}},
-          y:{grid:{color:'#f3f4f6'},ticks:{color:'#b0b7c3',font:{size:9},callback:v=>'$'+v.toLocaleString()},border:{display:false}}
-        }
-      }
+    charts.cashflow=new Chart(cfCtx,{
+      type:'bar',
+      data:{labels:cfDates.map(k=>k.slice(5)),datasets:[
+        {label:'Inflow',data:cfInflow,backgroundColor:'rgba(76,175,119,.75)',borderRadius:3,borderWidth:0,order:2},
+        {label:'Outflow',data:cfOutflow,backgroundColor:'rgba(200,204,214,.8)',borderRadius:3,borderWidth:0,order:2},
+        {label:'Net Change',data:cfNet,type:'line',borderColor:'#1a1f36',backgroundColor:'transparent',
+         borderWidth:2,pointRadius:4,pointBackgroundColor:'#1a1f36',pointStyle:'rectRot',tension:.3,order:1}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#e8eaf0',borderWidth:1,
+          titleColor:'#1a1f36',bodyColor:'#6b7280',callbacks:{label:i=>`  ${i.dataset.label}: ${money(i.raw)}`}}},
+        scales:{x:{grid:{display:false},ticks:{color:'#b0b7c3',font:{size:9},maxTicksLimit:10}},
+          y:{grid:{color:'#f3f4f6'},ticks:{color:'#b0b7c3',font:{size:9},callback:v=>'$'+v.toLocaleString()},border:{display:false}}}}
     });
   }
 
   // ── P&L bar chart
-  const plCtx = document.getElementById('cPL')?.getContext('2d');
+  const plCtx=document.getElementById('cPL')?.getContext('2d');
   if(plCtx){
-    charts.pl = new Chart(plCtx, {
+    charts.pl=new Chart(plCtx,{
       type:'bar',
-      data:{
-        labels:plLabels,
-        datasets:[
-          { label:'Revenue', data:plRev, backgroundColor:'rgba(76,175,119,.75)', borderRadius:4, borderWidth:0 },
-          { label:'Expenses', data:plExp, backgroundColor:'rgba(217,48,37,.65)', borderRadius:4, borderWidth:0 },
-          { label:'Net', data:plNet, type:'line', borderColor:'#2B5EEB', backgroundColor:'rgba(43,94,235,.08)',
-            borderWidth:2, pointRadius:4, pointBackgroundColor:'#2B5EEB', fill:true, tension:.3 }
-        ]
-      },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        interaction:{mode:'index',intersect:false},
-        plugins:{
-          legend:{display:true,position:'top',align:'end',labels:{boxWidth:10,font:{size:10},color:'#6b7280',usePointStyle:true,padding:14}},
+      data:{labels:plLabels,datasets:[
+        {label:'Revenue',data:plRev,backgroundColor:'rgba(76,175,119,.75)',borderRadius:4,borderWidth:0},
+        {label:'Expenses',data:plExp,backgroundColor:'rgba(217,48,37,.65)',borderRadius:4,borderWidth:0},
+        {label:'Net',data:plNet,type:'line',borderColor:'#2B5EEB',backgroundColor:'rgba(43,94,235,.08)',
+         borderWidth:2,pointRadius:4,pointBackgroundColor:'#2B5EEB',fill:true,tension:.3}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:true,position:'top',align:'end',labels:{boxWidth:10,font:{size:10},color:'#6b7280',usePointStyle:true,padding:14}},
           tooltip:{backgroundColor:'#fff',borderColor:'#e8eaf0',borderWidth:1,titleColor:'#1a1f36',bodyColor:'#6b7280',
-            callbacks:{label:i=>`  ${i.dataset.label}: ${money(i.raw)}`}}
-        },
-        scales:{
-          x:{grid:{display:false},ticks:{color:'#b0b7c3',font:{size:10}}},
-          y:{grid:{color:'#f3f4f6'},ticks:{color:'#b0b7c3',font:{size:10},callback:v=>'$'+v.toLocaleString()},border:{display:false}}
-        }
-      }
+            callbacks:{label:i=>`  ${i.dataset.label}: ${money(i.raw)}`}}},
+        scales:{x:{grid:{display:false},ticks:{color:'#b0b7c3',font:{size:10}}},
+          y:{grid:{color:'#f3f4f6'},ticks:{color:'#b0b7c3',font:{size:10},callback:v=>'$'+v.toLocaleString()},border:{display:false}}}}
     });
+  }
+
+  // ── Income vs Expense chart
+  const ieCtx=document.getElementById('cIE')?.getContext('2d');
+  if(ieCtx){
+    charts.ie=new Chart(ieCtx,{
+      type:'bar',
+      data:{labels:ieLabels,datasets:[
+        {label:'Income',data:ieInc,backgroundColor:'rgba(76,175,119,.8)',borderRadius:4,borderWidth:0},
+        {label:'Expense',data:ieExp,backgroundColor:'rgba(156,163,175,.7)',borderRadius:4,borderWidth:0}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#e8eaf0',borderWidth:1,
+          titleColor:'#1a1f36',bodyColor:'#6b7280',callbacks:{label:i=>`  ${i.dataset.label}: ${money(i.raw)}`}}},
+        scales:{x:{grid:{display:false},ticks:{color:'#b0b7c3',font:{size:9},maxRotation:45}},
+          y:{grid:{color:'#f3f4f6'},ticks:{color:'#b0b7c3',font:{size:9},callback:v=>'$'+v.toLocaleString()},border:{display:false}}}}
+    });
+  }
+
+  // ── Expense Breakdown donut
+  if(expTotal>0){
+    const ebCtx=document.getElementById('cExpBreak')?.getContext('2d');
+    if(ebCtx){
+      charts.expBreak=new Chart(ebCtx,{
+        type:'doughnut',
+        data:{labels:expCatKeys,datasets:[{
+          data:expCatKeys.map(k=>expByCat[k]),
+          backgroundColor:expCatKeys.map((_,i)=>PIE_COLORS[i%PIE_COLORS.length]),
+          borderWidth:2,borderColor:'#fff',hoverOffset:8
+        }]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+          plugins:{legend:{display:false},
+            tooltip:{backgroundColor:'#fff',borderColor:'#e8eaf0',borderWidth:1,titleColor:'#1a1f36',bodyColor:'#6b7280',
+              callbacks:{label:i=>`  ${i.label}: ${money(i.raw)} (${((i.raw/expTotal)*100).toFixed(1)}%)`}}}}
+      });
+    }
   }
 }
 
