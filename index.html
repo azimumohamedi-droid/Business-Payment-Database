@@ -291,11 +291,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
   <div class="sb-grp">Financial Statements</div>
   <div class="sb-item" data-v="ledger" onclick="nav('ledger')">
     <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12a1 1 0 010 2H2a1 1 0 010-2zm0 4h12a1 1 0 010 2H2a1 1 0 010-2zm0 4h12a1 1 0 010 2H2a1 1 0 010-2z"/></svg>
-    <span>Transaction Ledger</span>
+    <span>Sales Ledger</span>
   </div>
   <div class="sb-item" data-v="income" onclick="nav('income')">
     <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 12l4-4 3 3 5-6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>Income Statement</span>
+  </div>
+  <div class="sb-item" data-v="balsheet" onclick="nav('balsheet')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="1" width="14" height="14" rx="1.5"/><line x1="8" y1="1" x2="8" y2="15"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="1" y1="11" x2="15" y2="11"/></svg>
+    <span>Balance Sheet</span>
   </div>
   <div class="sb-item" data-v="cashflow" onclick="nav('cashflow')">
     <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1v14M3 6l5-5 5 5M3 10l5 5 5-5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -366,9 +370,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
     <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,14 6,9 10,11 16,4"/></svg>
     P&amp;L
   </button>
-  <button class="bn-item" data-v="monthly" onclick="nav('monthly')">
-    <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="1.5" y="3.5" width="15" height="13" rx="1.5"/><line x1="5.5" y1="1.5" x2="5.5" y2="5.5"/><line x1="12.5" y1="1.5" x2="12.5" y2="5.5"/><line x1="1.5" y1="8" x2="16.5" y2="8"/></svg>
-    Monthly
+  <button class="bn-item" data-v="balsheet" onclick="nav('balsheet')">
+    <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="1" y="1" width="16" height="16" rx="1.5"/><line x1="9" y1="1" x2="9" y2="17"/><line x1="1" y1="7" x2="17" y2="7"/><line x1="1" y1="13" x2="17" y2="13"/></svg>
+    Balance
   </button>
 </nav>
 
@@ -379,10 +383,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 let txs = JSON.parse(localStorage.getItem('biz_txs') || '[]');
 let biz = { name:'My Business', type:'Sole Trader', industry:'', currency:'USD', yearStart:'January', address:'', phone:'', email:'', ...JSON.parse(localStorage.getItem('biz_profile') || '{}') };
 
+// Migrate old transactions that lack saleAmt/paidAmt fields
+txs = txs.map(t => {
+  if (t.type === 'income' && !('saleAmt' in t)) {
+    return { ...t, saleAmt: t.amount ?? 0, paidAmt: t.amount ?? 0 };
+  }
+  if (t.type === 'expense' && !('amount' in t)) {
+    return { ...t, amount: 0 };
+  }
+  return t;
+});
+
 // ═══ UI State ══════════════════════════════════════════════
 let curView = 'dashboard';
 let sortKey = 'date'; let sortAsc = false;
-let lSearch = ''; let lType = 'all'; let lCat = '';
+let lSearch = ''; let lCat = '';
 let addType = 'income';
 let charts = {};
 
@@ -402,14 +417,29 @@ function money(n) {
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function sd(s) { return parseDL(s).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'}); }
+function sdLong(s) { return parseDL(s).toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
 function mLabel(y,m) { return new Date(y,m,1).toLocaleDateString('en-US',{month:'short',year:'numeric'}); }
-function sum(list) {
-  const inc=list.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const exp=list.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  return {inc,exp,net:inc-exp};
-}
 function signVal(n) { return (n<0?'-':'')+money(n); }
 function cls(n) { return n>0?'pos':n<0?'neg':''; }
+
+// Per-transaction field accessor (handles old and new data shapes)
+function txAmts(t) {
+  if (t.type === 'income') {
+    const saleAmt = t.saleAmt ?? t.amount ?? 0;
+    const paidAmt = t.paidAmt ?? t.amount ?? 0;
+    return { saleAmt, paidAmt, owed: +(saleAmt - paidAmt).toFixed(2), expAmt: 0 };
+  }
+  return { saleAmt: 0, paidAmt: 0, owed: 0, expAmt: t.amount ?? 0 };
+}
+
+// Summarise a list of transactions
+function sum(list) {
+  let saleAmt=0, paidAmt=0, owed=0, expAmt=0;
+  list.forEach(t => { const a=txAmts(t); saleAmt+=a.saleAmt; paidAmt+=a.paidAmt; owed+=a.owed; expAmt+=a.expAmt; });
+  return { saleAmt:+saleAmt.toFixed(2), paidAmt:+paidAmt.toFixed(2),
+           owed:+owed.toFixed(2), expAmt:+expAmt.toFixed(2),
+           net:+(paidAmt-expAmt).toFixed(2) };
+}
 
 // ═══ Period filter ══════════════════════════════════════════
 function periodTxs() {
@@ -437,9 +467,10 @@ function periodTxs() {
 const TITLES = {
   dashboard:['Dashboard','Overview of your business performance'],
   profile:['Business Profile','Your company details and settings'],
-  add:['Add Transaction','Record a new income or expense entry'],
-  ledger:['Transaction Ledger','Complete record of all transactions'],
+  add:['Add Transaction','Record a new sale or expense entry'],
+  ledger:['Sales Ledger','Sales · Paid Amount · Amount Owed — with daily totals'],
   income:['Income Statement','Profit & Loss — Revenue vs Expenses'],
+  balsheet:['Balance Sheet','Assets, Liabilities & Owner\'s Equity'],
   cashflow:['Cash Flow Statement','All cash movements with running balance'],
   monthly:['Monthly Report','Month-by-month P&L for the past 12 months'],
   category:['Category Report','Breakdown of transactions by category'],
@@ -464,14 +495,15 @@ function render() {
   charts = {};
   const cb = document.getElementById('cb');
   const ft = periodTxs();
-  if (curView==='dashboard')  vDashboard(cb, ft);
-  else if (curView==='profile') vProfile(cb);
-  else if (curView==='add')   vAdd(cb);
-  else if (curView==='ledger') vLedger(cb, ft);
-  else if (curView==='income') vIncome(cb, ft);
-  else if (curView==='cashflow') vCashflow(cb, ft);
-  else if (curView==='monthly') vMonthly(cb);
-  else if (curView==='category') vCategory(cb, ft);
+  if      (curView==='dashboard') vDashboard(cb, ft);
+  else if (curView==='profile')   vProfile(cb);
+  else if (curView==='add')       vAdd(cb);
+  else if (curView==='ledger')    vLedger(cb, ft);
+  else if (curView==='income')    vIncome(cb, ft);
+  else if (curView==='balsheet')  vBalSheet(cb, ft);
+  else if (curView==='cashflow')  vCashflow(cb, ft);
+  else if (curView==='monthly')   vMonthly(cb);
+  else if (curView==='category')  vCategory(cb, ft);
 }
 
 // ═══ DASHBOARD ═════════════════════════════════════════════
@@ -479,29 +511,29 @@ function vDashboard(cb, ft) {
   const s = sum(ft);
   const tod = toDS(new Date());
   const st = sum(txs.filter(t=>t.date===tod));
-  const yrSt = sum(txs.filter(t=>{ const d=parseDL(t.date); return d.getFullYear()===new Date().getFullYear(); }));
+  const allS = sum(txs);
 
   cb.innerHTML = `
   <div class="dash-grid">
     <div class="dash-card">
-      <div class="dash-card-lbl">Period Revenue</div>
-      <div class="dash-card-val pos">${money(s.inc)}</div>
-      <div class="dash-card-sub">${ft.filter(t=>t.type==='income').length} income entries</div>
+      <div class="dash-card-lbl">Total Sales</div>
+      <div class="dash-card-val pos">${money(s.saleAmt)}</div>
+      <div class="dash-card-sub">${ft.filter(t=>t.type==='income').length} sale entries</div>
     </div>
     <div class="dash-card">
-      <div class="dash-card-lbl">Period Expenses</div>
-      <div class="dash-card-val neg">${money(s.exp)}</div>
-      <div class="dash-card-sub">${ft.filter(t=>t.type==='expense').length} expense entries</div>
+      <div class="dash-card-lbl">Amount Collected</div>
+      <div class="dash-card-val pos">${money(s.paidAmt)}</div>
+      <div class="dash-card-sub">Cash received this period</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-lbl">Amount Owed</div>
+      <div class="dash-card-val ${s.owed>0?'neg':'pos'}">${money(s.owed)}</div>
+      <div class="dash-card-sub">Accounts receivable</div>
     </div>
     <div class="dash-card">
       <div class="dash-card-lbl">Net Income</div>
       <div class="dash-card-val ${cls(s.net)}">${signVal(s.net)}</div>
-      <div class="dash-card-sub">${s.net>=0?'Profitable':'At a loss'} this period</div>
-    </div>
-    <div class="dash-card">
-      <div class="dash-card-lbl">Year-to-Date Net</div>
-      <div class="dash-card-val ${cls(yrSt.net)}">${signVal(yrSt.net)}</div>
-      <div class="dash-card-sub">${txs.filter(t=>parseDL(t.date).getFullYear()===new Date().getFullYear()).length} txns this year</div>
+      <div class="dash-card-sub">Collected − ${money(s.expAmt)} expenses</div>
     </div>
   </div>
   <div class="dash-charts">
@@ -510,7 +542,7 @@ function vDashboard(cb, ft) {
       <div class="dash-cc-wrap"><canvas id="cTrend"></canvas></div>
     </div>
     <div class="dash-cc">
-      <div class="dash-cc-title">Income vs Expense</div>
+      <div class="dash-cc-title">Sales vs Collected vs Owed</div>
       <div class="dash-cc-wrap"><canvas id="cDonut"></canvas></div>
     </div>
   </div>
@@ -520,13 +552,18 @@ function vDashboard(cb, ft) {
   // Trend chart
   const map={};
   const base=new Date(); base.setHours(0,0,0,0);
-  for(let i=29;i>=0;i--){ const d=new Date(base); d.setDate(base.getDate()-i); map[toDS(d)]={inc:0,exp:0}; }
-  txs.forEach(t=>{ if(map[t.date]){ map[t.date][t.type==='income'?'inc':'exp']+=t.amount; }});
+  for(let i=29;i>=0;i--){ const d=new Date(base); d.setDate(base.getDate()-i); map[toDS(d)]={paid:0,exp:0}; }
+  txs.forEach(t=>{
+    if(!map[t.date]) return;
+    const a=txAmts(t);
+    map[t.date].paid+=a.paidAmt;
+    map[t.date].exp+=a.expAmt;
+  });
   let cum=0;
-  const tData=Object.keys(map).sort().map(k=>{ cum+=map[k].inc-map[k].exp; return{x:k,y:+cum.toFixed(2)}; });
-  const pos = (tData[tData.length-1]?.y??0)>=0;
-  const lc = pos?'#16a34a':'#dc2626';
-  const tc = document.getElementById('cTrend')?.getContext('2d');
+  const tData=Object.keys(map).sort().map(k=>{ cum+=map[k].paid-map[k].exp; return{x:k,y:+cum.toFixed(2)}; });
+  const pos=(tData[tData.length-1]?.y??0)>=0;
+  const lc=pos?'#16a34a':'#dc2626';
+  const tc=document.getElementById('cTrend')?.getContext('2d');
   if(tc){
     const g=tc.createLinearGradient(0,0,0,200);
     g.addColorStop(0,pos?'rgba(22,163,74,.22)':'rgba(220,38,38,.22)');
@@ -535,21 +572,24 @@ function vDashboard(cb, ft) {
       type:'line',
       data:{datasets:[{data:tData,borderColor:lc,backgroundColor:g,borderWidth:2,fill:true,tension:.35,pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:lc}]},
       options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-        plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2540',borderColor:'#374151',borderWidth:1,titleColor:'#9ca3af',bodyColor:'#f3f4f6',callbacks:{title:i=>sd(i[0].raw.x),label:i=>`Balance: ${money(i.raw.y)}`}}},
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2540',borderColor:'#374151',borderWidth:1,titleColor:'#9ca3af',bodyColor:'#f3f4f6',callbacks:{title:i=>sd(i[0].raw.x),label:i=>`Net Balance: ${money(i.raw.y)}`}}},
         scales:{x:{type:'time',time:{unit:'day'},grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',font:{size:10},maxTicksLimit:7}},
           y:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',font:{size:10},callback:v=>'$'+v.toLocaleString()}}}}
     });
   }
-
-  // Donut
+  // Bar chart: Sales vs Collected vs Owed
   const dc=document.getElementById('cDonut')?.getContext('2d');
   if(dc){
     charts.donut=new Chart(dc,{
-      type:'doughnut',
-      data:{labels:['Income','Expense'],datasets:[{data:[s.inc,s.exp],backgroundColor:['#16a34a','#dc2626'],borderWidth:0,hoverOffset:4}]},
+      type:'bar',
+      data:{labels:['Sales','Collected','Owed','Expenses'],
+        datasets:[{data:[s.saleAmt,s.paidAmt,s.owed,s.expAmt],
+          backgroundColor:['#3b82f6','#16a34a','#f59e0b','#dc2626'],
+          borderRadius:5,borderWidth:0}]},
       options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{labels:{color:'#374151',font:{size:11}}},
-          tooltip:{backgroundColor:'#1e2540',borderColor:'#374151',borderWidth:1,titleColor:'#9ca3af',bodyColor:'#f3f4f6',callbacks:{label:i=>`  ${i.label}: ${money(i.raw)}`}}}}
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2540',borderColor:'#374151',borderWidth:1,titleColor:'#9ca3af',bodyColor:'#f3f4f6',callbacks:{label:i=>`  ${i.label}: ${money(i.raw)}`}}},
+        scales:{x:{grid:{display:false},ticks:{color:'#6b7280',font:{size:10}}},
+          y:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',font:{size:10},callback:v=>'$'+v.toLocaleString()}}}}
     });
   }
 }
@@ -558,15 +598,18 @@ function recentTable(rows) {
   if (!rows.length) return '<div style="padding:28px;text-align:center;color:#9ca3af;font-style:italic;">No transactions yet. <a onclick="nav(\'add\')" style="color:#3b82f6;cursor:pointer;text-decoration:underline;">Add one →</a></div>';
   return `<table class="xl-table">
     <thead><tr class="xl-hdr">
-      <th class="xl-rn no-sort">#</th><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th class="xl-num">Amount</th>
+      <th class="xl-rn no-sort">#</th><th>Date</th><th>Type</th><th>Category</th><th>Description</th>
+      <th class="xl-num no-sort">Sale Amt</th><th class="xl-num no-sort">Paid</th><th class="xl-num no-sort">Owed</th>
     </tr></thead>
-    <tbody>${rows.map((t,i)=>`<tr>
+    <tbody>${rows.map((t,i)=>{ const a=txAmts(t); return `<tr>
       <td class="xl-rn">${i+1}</td>
       <td>${sd(t.date)}</td>
-      <td><span class="${t.type==='income'?'badge-inc':'badge-exp'}">${t.type==='income'?'↑ Income':'↓ Expense'}</span></td>
+      <td><span class="${t.type==='income'?'badge-inc':'badge-exp'}">${t.type==='income'?'↑ Sale':'↓ Expense'}</span></td>
       <td>${esc(t.cat)}</td><td>${esc(t.desc)}</td>
-      <td class="xl-num ${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${money(t.amount)}</td>
-    </tr>`).join('')}</tbody>
+      <td class="xl-num">${a.saleAmt>0?money(a.saleAmt):'—'}</td>
+      <td class="xl-num pos">${a.paidAmt>0?money(a.paidAmt):a.expAmt>0?`<span class="neg">-${money(a.expAmt)}</span>`:'—'}</td>
+      <td class="xl-num ${a.owed>0?'neg':''}">${a.owed>0?money(a.owed):'—'}</td>
+    </tr>`; }).join('')}</tbody>
   </table>`;
 }
 
@@ -604,34 +647,45 @@ function saveProfile() {
 
 // ═══ ADD TRANSACTION ═══════════════════════════════════════
 function vAdd(cb) {
+  const isSale = addType === 'income';
   cb.innerHTML = `
   <div class="form-card">
     <div class="form-hdr">New Transaction</div>
     <div class="type-toggle">
-      <button class="tt-btn inc${addType==='income'?' on':''}" onclick="setAddType('income')">↑ Income</button>
-      <button class="tt-btn exp${addType==='expense'?' on':''}" onclick="setAddType('expense')">↓ Expense</button>
+      <button class="tt-btn inc${isSale?' on':''}" onclick="setAddType('income')">↑ Sale / Income</button>
+      <button class="tt-btn exp${!isSale?' on':''}" onclick="setAddType('expense')">↓ Expense</button>
     </div>
     <div class="form-grid">
       <div class="fg"><label>Date</label><input type="date" class="fi" id="fDate" value="${toDS(new Date())}"></div>
-      <div class="fg"><label>Amount (${biz.currency})</label><input type="number" class="fi" id="fAmt" placeholder="0.00" min="0" step="0.01"></div>
+      <div class="fg"><label>Reference # (optional)</label><input class="fi" id="fRef" placeholder="INV-001"></div>
       <div class="fg"><label>Category</label>
         <select class="fi" id="fCat">
           <option value="">— select category —</option>
-          <optgroup label="Income">
+          ${isSale ? `<optgroup label="Income / Sales">
             <option>Sales</option><option>Services</option><option>Consulting</option>
-            <option>Investment Return</option><option>Other Income</option>
-          </optgroup>
-          <optgroup label="Expense">
+            <option>Investment Return</option><option>Other Income</option></optgroup>` :
+          `<optgroup label="Expense">
             <option>Supplies / Stock</option><option>Rent</option><option>Utilities</option>
             <option>Payroll</option><option>Marketing</option><option>Maintenance</option>
-            <option>Transport</option><option>Tax</option><option>Other Expense</option>
-          </optgroup>
+            <option>Transport</option><option>Tax</option><option>Other Expense</option></optgroup>`}
         </select>
       </div>
-      <div class="fg"><label>Reference # (optional)</label><input class="fi" id="fRef" placeholder="INV-001"></div>
+      ${isSale ? `
+      <div class="fg"><label>Sale Amount (${biz.currency}) — Total invoiced</label>
+        <input type="number" class="fi" id="fSaleAmt" placeholder="0.00" min="0" step="0.01"
+          oninput="document.getElementById('fPaidAmt').placeholder=this.value||'0.00'"></div>
+      <div class="fg"><label>Paid Amount (${biz.currency}) — Received so far</label>
+        <input type="number" class="fi" id="fPaidAmt" placeholder="0.00" min="0" step="0.01"></div>
+      ` : `
+      <div class="fg"><label>Amount (${biz.currency})</label>
+        <input type="number" class="fi" id="fAmt" placeholder="0.00" min="0" step="0.01"></div>
+      `}
       <div class="fg full"><label>Description</label><input class="fi" id="fDesc" placeholder="Describe this transaction…"></div>
       <div class="fg full"><label>Notes (optional)</label><input class="fi" id="fNotes" placeholder="Additional details…"></div>
     </div>
+    ${isSale ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:10px 14px;margin-top:12px;font-size:12px;color:#166534;">
+      <b>Amount Owed</b> = Sale Amount − Paid Amount (calculated automatically)
+    </div>` : ''}
     <button class="btn-submit" onclick="submitTx()">Add Transaction</button>
   </div>`;
 }
@@ -640,83 +694,124 @@ function setAddType(t) { addType=t; vAdd(document.getElementById('cb')); }
 
 function submitTx() {
   const date=document.getElementById('fDate').value;
-  const amt=parseFloat(document.getElementById('fAmt').value);
   const cat=document.getElementById('fCat').value;
-  const ref=document.getElementById('fRef').value.trim();
+  const ref=document.getElementById('fRef')?.value.trim()||'';
   const desc=document.getElementById('fDesc').value.trim();
-  const notes=document.getElementById('fNotes').value.trim();
+  const notes=document.getElementById('fNotes')?.value.trim()||'';
   if (!date){ alert('Date required.'); return; }
-  if (!amt||amt<=0){ alert('Enter a valid amount.'); return; }
   if (!cat){ alert('Select a category.'); return; }
   if (!desc){ alert('Description required.'); return; }
-  txs.unshift({id:uid(),date,type:addType,cat,ref,desc,notes,amount:amt});
+
+  if (addType==='income') {
+    const saleAmt=parseFloat(document.getElementById('fSaleAmt').value);
+    const paidAmt=parseFloat(document.getElementById('fPaidAmt').value)||0;
+    if (!saleAmt||saleAmt<=0){ alert('Enter a valid sale amount.'); return; }
+    if (paidAmt<0){ alert('Paid amount cannot be negative.'); return; }
+    if (paidAmt>saleAmt){ alert('Paid amount cannot exceed the sale amount.'); return; }
+    txs.unshift({id:uid(),date,type:'income',cat,ref,desc,notes,saleAmt,paidAmt,amount:saleAmt});
+  } else {
+    const amount=parseFloat(document.getElementById('fAmt').value);
+    if (!amount||amount<=0){ alert('Enter a valid amount.'); return; }
+    txs.unshift({id:uid(),date,type:'expense',cat,ref,desc,notes,amount,saleAmt:0,paidAmt:0});
+  }
   save(); toast('Transaction added ✓'); nav('ledger');
 }
 
-// ═══ TRANSACTION LEDGER ════════════════════════════════════
+// ═══ SALES LEDGER (daily grouped) ══════════════════════════
 function vLedger(cb, ft) {
+  // Filter
   let rows = [...ft];
   if (lSearch) rows=rows.filter(t=>(t.desc+t.cat+(t.ref||'')).toLowerCase().includes(lSearch.toLowerCase()));
-  if (lType!=='all') rows=rows.filter(t=>t.type===lType);
   if (lCat) rows=rows.filter(t=>t.cat===lCat);
-  rows.sort((a,b)=>{
-    let va=a[sortKey]??'', vb=b[sortKey]??'';
-    if(sortKey==='amount'){va=a.amount;vb=b.amount;}
-    const c=va<vb?-1:va>vb?1:0; return sortAsc?c:-c;
-  });
-  const sorted=[...rows].sort((a,b)=>a.date.localeCompare(b.date));
-  let bal=0; const bMap={};
-  sorted.forEach(t=>{ bal+=(t.type==='income'?t.amount:-t.amount); bMap[t.id]=+bal.toFixed(2); });
-  const s=sum(rows);
+  // Sort by date asc (then id) for daily grouping
+  rows.sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
+
   const cats=[...new Set(ft.map(t=>t.cat))].sort();
-  function th(k,lbl,w=''){const a=sortKey===k?(sortAsc?' s-asc':' s-desc'):'';return`<th class="${a}"${w?` style="width:${w}"`:''}onclick="sortBy('${k}')">${lbl}</th>`;}
+  const totals=sum(rows);
+
+  // Group rows by date
+  const byDate={};
+  rows.forEach(t=>{ (byDate[t.date]=byDate[t.date]||[]).push(t); });
+  const dates=Object.keys(byDate).sort();
+
+  let rn=1;
+  let bodyHtml='';
+
+  if (!rows.length) {
+    bodyHtml=`<tr><td colspan="9" style="padding:32px;text-align:center;color:#9ca3af;font-style:italic;">No transactions match the current filters.</td></tr>`;
+  } else {
+    dates.forEach(date=>{
+      const dayRows=byDate[date];
+      const daySum=sum(dayRows);
+      // Date group header
+      bodyHtml+=`<tr style="background:#f8fafc!important;">
+        <td colspan="9" style="padding:7px 12px;font-size:11px;font-weight:700;color:#1e40af;background:#eff6ff!important;border:1px solid #dbeafe!important;letter-spacing:.3px;">
+          📅 ${sdLong(date)}
+        </td></tr>`;
+      // Day's rows
+      dayRows.forEach(t=>{
+        const a=txAmts(t);
+        bodyHtml+=`<tr>
+          <td class="xl-rn">${rn++}</td>
+          <td style="color:#9ca3af;font-size:11px;">${esc(t.ref||'—')}</td>
+          <td><span class="${t.type==='income'?'badge-inc':'badge-exp'}">${t.type==='income'?'↑ Sale':'↓ Exp'}</span></td>
+          <td>${esc(t.cat)}</td>
+          <td>${esc(t.desc)}${t.notes?`<span style="color:#9ca3af;font-size:11px;"> · ${esc(t.notes)}</span>`:''}</td>
+          <td class="xl-num">${a.saleAmt>0?money(a.saleAmt):'—'}</td>
+          <td class="xl-num pos">${a.paidAmt>0?money(a.paidAmt):a.expAmt>0?`<span class="neg">-${money(a.expAmt)}</span>`:'—'}</td>
+          <td class="xl-num ${a.owed>0?'neg':''}">${a.owed>0?money(a.owed):'—'}</td>
+          <td style="text-align:center"><button class="del-btn" onclick="delTx('${t.id}')">×</button></td>
+        </tr>`;
+      });
+      // Daily total row
+      bodyHtml+=`<tr class="xl-subtotal">
+        <td class="xl-rn"></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td style="font-size:11px;letter-spacing:.4px;">DAILY TOTAL — ${dayRows.length} record${dayRows.length!==1?'s':''}</td>
+        <td class="xl-num">${money(daySum.saleAmt)}</td>
+        <td class="xl-num pos">${money(daySum.paidAmt)}</td>
+        <td class="xl-num ${daySum.owed>0?'neg':''}">${money(daySum.owed)}</td>
+        <td></td>
+      </tr>`;
+    });
+  }
+
   cb.innerHTML = `
   <div class="fbar">
-    <input class="fi-sm" placeholder="Search description, category, ref…" value="${esc(lSearch)}" oninput="lSearch=this.value;render()">
-    <select class="fi-sm" onchange="lType=this.value;render()">
-      <option value="all"${lType==='all'?' selected':''}>All Types</option>
-      <option value="income"${lType==='income'?' selected':''}>Income Only</option>
-      <option value="expense"${lType==='expense'?' selected':''}>Expenses Only</option>
-    </select>
+    <input class="fi-sm" placeholder="Search…" value="${esc(lSearch)}" oninput="lSearch=this.value;render()">
     <select class="fi-sm" onchange="lCat=this.value;render()">
       <option value="">All Categories</option>
       ${cats.map(c=>`<option${lCat===c?' selected':''}>${c}</option>`).join('')}
     </select>
     <button class="btn-sm btn-dark" onclick="nav('add')" style="padding:5px 11px;">+ Add</button>
-    <span class="fbar-count">${rows.length} records</span>
+    <span class="fbar-count">${rows.length} records · ${dates.length} day${dates.length!==1?'s':''}</span>
   </div>
   <div class="xl-wrap"><table class="xl-table">
+    <colgroup>
+      <col style="width:36px"><col style="width:80px"><col style="width:80px">
+      <col style="width:130px"><col><col style="width:120px">
+      <col style="width:120px"><col style="width:120px"><col style="width:32px">
+    </colgroup>
     <thead><tr class="xl-hdr">
       <th class="xl-rn no-sort">#</th>
-      ${th('date','Date','95px')}
-      ${th('ref','Ref #','80px')}
-      ${th('type','Type','90px')}
-      ${th('cat','Category','130px')}
-      ${th('desc','Description')}
-      ${th('amount','Amount','110px')}
-      <th class="xl-num no-sort" style="width:110px">Balance</th>
-      <th class="no-sort" style="width:32px"></th>
+      <th class="no-sort">Ref #</th>
+      <th class="no-sort">Type</th>
+      <th class="no-sort">Category</th>
+      <th class="no-sort">Description</th>
+      <th class="xl-num no-sort">Sale Amount</th>
+      <th class="xl-num no-sort">Paid Amount</th>
+      <th class="xl-num no-sort">Amount Owed</th>
+      <th class="no-sort"></th>
     </tr></thead>
-    <tbody>
-    ${rows.length ? rows.map((t,i)=>`<tr>
-      <td class="xl-rn">${i+1}</td>
-      <td>${sd(t.date)}</td>
-      <td style="color:#9ca3af;font-size:11px;">${esc(t.ref||'—')}</td>
-      <td><span class="${t.type==='income'?'badge-inc':'badge-exp'}">${t.type==='income'?'↑ Income':'↓ Expense'}</span></td>
-      <td>${esc(t.cat)}</td>
-      <td>${esc(t.desc)}${t.notes?`<span style="color:#9ca3af;font-size:11px;"> · ${esc(t.notes)}</span>`:''}</td>
-      <td class="xl-num ${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${money(t.amount)}</td>
-      <td class="xl-num ${cls(bMap[t.id])}">${signVal(bMap[t.id])}</td>
-      <td style="text-align:center"><button class="del-btn" onclick="delTx('${t.id}')">×</button></td>
-    </tr>`).join('') : `<tr><td colspan="9" style="padding:32px;text-align:center;color:#9ca3af;font-style:italic;">No transactions match the current filters.</td></tr>`}
-    </tbody>
+    <tbody>${bodyHtml}</tbody>
     <tfoot><tr class="xl-total">
       <td class="xl-rn"></td>
-      <td colspan="5" style="font-size:11px;letter-spacing:.4px">TOTALS — ${rows.length} records</td>
-      <td class="xl-num" style="font-size:11px;line-height:1.6">
-        <div>↑ ${money(s.inc)}</div><div>↓ ${money(s.exp)}</div>
-      </td>
-      <td class="xl-num ${cls(s.net)}" style="font-size:14px">${signVal(s.net)}</td>
+      <td colspan="4" style="font-size:11px;letter-spacing:.4px;">GRAND TOTAL — ${rows.length} records</td>
+      <td class="xl-num">${money(totals.saleAmt)}</td>
+      <td class="xl-num">${money(totals.paidAmt)}</td>
+      <td class="xl-num ${totals.owed>0?'neg':''}">${money(totals.owed)}</td>
       <td></td>
     </tr></tfoot>
   </table></div>`;
@@ -728,35 +823,142 @@ function delTx(id) { txs=txs.filter(t=>t.id!==id); save(); render(); }
 // ═══ INCOME STATEMENT ══════════════════════════════════════
 function vIncome(cb, ft) {
   const pLabel = {all:'All Time',year:'This Year',month:'This Month',week:'This Week',today:'Today'}[document.getElementById('periodSel').value]||'';
+  // Revenue = total SALE amounts (not just collected)
   const iCats={}, eCats={};
-  ft.forEach(t=>{ if(t.type==='income') iCats[t.cat]=(iCats[t.cat]||0)+t.amount;
-    else eCats[t.cat]=(eCats[t.cat]||0)+t.amount; });
-  const ti=Object.values(iCats).reduce((s,v)=>s+v,0);
-  const te=Object.values(eCats).reduce((s,v)=>s+v,0);
-  const net=ti-te; let rn=1;
+  ft.forEach(t=>{
+    const a=txAmts(t);
+    if(t.type==='income') iCats[t.cat]=(iCats[t.cat]||0)+a.saleAmt;
+    else eCats[t.cat]=(eCats[t.cat]||0)+a.expAmt;
+  });
+  const ti=+Object.values(iCats).reduce((s,v)=>s+v,0).toFixed(2);
+  const te=+Object.values(eCats).reduce((s,v)=>s+v,0).toFixed(2);
+  // Gross profit = Revenue - COGS (Supplies/Stock)
+  const cogs=+(iCats['Supplies / Stock']||eCats['Supplies / Stock']||0).toFixed(2);
+  const grossProfit=+(ti-cogs).toFixed(2);
+  const opEx=+(te-cogs).toFixed(2);
+  const net=+(ti-te).toFixed(2);
+  const collected=+ft.filter(t=>t.type==='income').reduce((s,t)=>s+(txAmts(t).paidAmt),0).toFixed(2);
+  const ar=+(ti-collected).toFixed(2);
+  let rn=1;
   const iRows=Object.entries(iCats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>
     `<tr class="xl-indent"><td class="xl-rn">${rn++}</td><td>${esc(c)}</td><td></td><td class="xl-num pos">${money(v)}</td></tr>`).join('');
   const eRows=Object.entries(eCats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>
     `<tr class="xl-indent"><td class="xl-rn">${rn++}</td><td>${esc(c)}</td><td class="xl-num neg">${money(v)}</td><td></td></tr>`).join('');
+
   cb.innerHTML = `<div class="xl-wrap"><table class="xl-table">
-    <colgroup><col style="width:40px"><col><col style="width:130px"><col style="width:130px"></colgroup>
+    <colgroup><col style="width:40px"><col><col style="width:140px"><col style="width:140px"></colgroup>
     <thead><tr class="xl-hdr">
       <th class="xl-rn no-sort">#</th><th class="no-sort">Description</th>
       <th class="xl-num no-sort">Expenses</th><th class="xl-num no-sort">Revenue</th>
     </tr></thead>
     <tbody>
       <tr class="xl-stmt-title"><td></td><td colspan="3">${esc(biz.name)}</td></tr>
-      <tr class="xl-stmt-sub"><td></td><td colspan="3">Income Statement &nbsp;|&nbsp; ${pLabel}</td></tr>
+      <tr class="xl-stmt-sub"><td></td><td colspan="3">Income Statement (Profit &amp; Loss) &nbsp;|&nbsp; ${pLabel}</td></tr>
       <tr class="xl-spacer"><td colspan="4"></td></tr>
-      <tr class="xl-section"><td></td><td colspan="3">Revenue</td></tr>
-      ${iRows||`<tr class="xl-indent"><td class="xl-rn">—</td><td colspan="3" style="color:#9ca3af;font-style:italic;">No income in this period</td></tr>`}
-      <tr class="xl-subtotal"><td class="xl-rn"></td><td>Total Revenue</td><td></td><td class="xl-num pos">${money(ti)}</td></tr>
+
+      <tr class="xl-section"><td></td><td colspan="3">Revenue — Total Sales</td></tr>
+      ${iRows||`<tr class="xl-indent"><td class="xl-rn">—</td><td colspan="3" style="color:#9ca3af;font-style:italic;">No sales in this period</td></tr>`}
+      <tr class="xl-subtotal"><td class="xl-rn"></td><td><b>Total Revenue</b></td><td></td><td class="xl-num pos">${money(ti)}</td></tr>
+      <tr class="xl-indent" style="font-size:11px;">
+        <td class="xl-rn"></td><td style="color:#6b7280;padding-left:26px!important;">  Collected (Cash Received)</td><td></td><td class="xl-num pos" style="color:#16a34a!important;">${money(collected)}</td></tr>
+      <tr class="xl-indent" style="font-size:11px;">
+        <td class="xl-rn"></td><td style="color:#6b7280;padding-left:26px!important;">  Accounts Receivable (Owed)</td><td></td><td class="xl-num" style="color:#f59e0b!important;">${money(ar)}</td></tr>
       <tr class="xl-spacer"><td colspan="4"></td></tr>
-      <tr class="xl-section"><td></td><td colspan="3">Expenses</td></tr>
+
+      <tr class="xl-section"><td></td><td colspan="3">Operating Expenses</td></tr>
       ${eRows||`<tr class="xl-indent"><td class="xl-rn">—</td><td colspan="3" style="color:#9ca3af;font-style:italic;">No expenses in this period</td></tr>`}
-      <tr class="xl-subtotal"><td class="xl-rn"></td><td>Total Expenses</td><td class="xl-num neg">${money(te)}</td><td></td></tr>
+      <tr class="xl-subtotal"><td class="xl-rn"></td><td><b>Total Expenses</b></td><td class="xl-num neg">${money(te)}</td><td></td></tr>
       <tr class="xl-spacer"><td colspan="4"></td></tr>
-      <tr class="${net>=0?'xl-net-pos':'xl-net-neg'}"><td class="xl-rn"></td><td>${net>=0?'NET INCOME':'NET LOSS'}</td><td></td><td class="xl-num">${signVal(net)}</td></tr>
+
+      <tr class="${net>=0?'xl-net-pos':'xl-net-neg'}">
+        <td class="xl-rn"></td>
+        <td>${net>=0?'NET INCOME (PROFIT)':'NET LOSS'}</td>
+        <td></td>
+        <td class="xl-num">${signVal(net)}</td>
+      </tr>
+    </tbody>
+  </table></div>`;
+}
+
+// ═══ BALANCE SHEET ═════════════════════════════════════════
+function vBalSheet(cb, ft) {
+  const allS = sum(txs);  // always use all-time data for balance sheet
+  const pLabel = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+
+  // ASSETS
+  const cash = allS.paidAmt - allS.expAmt;   // cash collected minus expenses paid
+  const ar   = allS.owed;                     // accounts receivable
+  const totalAssets = +(cash + ar).toFixed(2);
+
+  // LIABILITIES — not tracked (zero)
+  const totalLiab = 0;
+
+  // EQUITY = Net Income (retained earnings)
+  const retainedEarnings = allS.net;          // paidAmt - expAmt
+  const totalEquity = retainedEarnings;
+  const totalLiabEquity = +(totalLiab + totalEquity).toFixed(2);
+
+  cb.innerHTML = `<div class="xl-wrap"><table class="xl-table">
+    <colgroup><col style="width:40px"><col><col style="width:140px"><col style="width:140px"></colgroup>
+    <thead><tr class="xl-hdr">
+      <th class="xl-rn no-sort">#</th><th class="no-sort">Description</th>
+      <th class="xl-num no-sort">Amount</th><th class="xl-num no-sort">Total</th>
+    </tr></thead>
+    <tbody>
+      <tr class="xl-stmt-title"><td></td><td colspan="3">${esc(biz.name)}</td></tr>
+      <tr class="xl-stmt-sub"><td></td><td colspan="3">Balance Sheet &nbsp;|&nbsp; As of ${pLabel}</td></tr>
+      <tr class="xl-spacer"><td colspan="4"></td></tr>
+
+      <tr class="xl-section"><td></td><td colspan="3">Assets</td></tr>
+      <tr style="font-size:11px;font-weight:600;"><td class="xl-rn"></td>
+        <td style="padding-left:14px!important;color:#374151;">Current Assets</td><td></td><td></td></tr>
+      <tr class="xl-indent"><td class="xl-rn">1</td>
+        <td>Cash &amp; Cash Equivalents <span style="font-size:10px;color:#6b7280;">(Collected − Expenses)</span></td>
+        <td class="xl-num ${cls(cash)}">${signVal(cash)}</td><td></td></tr>
+      <tr class="xl-indent"><td class="xl-rn">2</td>
+        <td>Accounts Receivable <span style="font-size:10px;color:#6b7280;">(Sales Owed)</span></td>
+        <td class="xl-num ${ar>0?'neg':''}">${money(ar)}</td><td></td></tr>
+      <tr class="xl-subtotal"><td class="xl-rn"></td>
+        <td>Total Current Assets</td><td></td>
+        <td class="xl-num ${cls(totalAssets)}">${signVal(totalAssets)}</td></tr>
+      <tr class="xl-spacer"><td colspan="4"></td></tr>
+      <tr class="xl-total"><td class="xl-rn"></td>
+        <td>TOTAL ASSETS</td><td></td>
+        <td class="xl-num">${signVal(totalAssets)}</td></tr>
+
+      <tr class="xl-spacer"><td colspan="4"></td></tr>
+
+      <tr class="xl-section"><td></td><td colspan="3">Liabilities</td></tr>
+      <tr style="font-size:11px;font-weight:600;"><td class="xl-rn"></td>
+        <td style="padding-left:14px!important;color:#374151;">Current Liabilities</td><td></td><td></td></tr>
+      <tr class="xl-indent"><td class="xl-rn">3</td>
+        <td>Total Liabilities <span style="font-size:10px;color:#6b7280;">(none recorded)</span></td>
+        <td class="xl-num">$0.00</td><td></td></tr>
+      <tr class="xl-subtotal"><td class="xl-rn"></td>
+        <td>Total Liabilities</td><td></td><td class="xl-num">$0.00</td></tr>
+      <tr class="xl-spacer"><td colspan="4"></td></tr>
+
+      <tr class="xl-section"><td></td><td colspan="3">Owner's Equity</td></tr>
+      <tr class="xl-indent"><td class="xl-rn">4</td>
+        <td>Retained Earnings / Net Income</td>
+        <td class="xl-num ${cls(retainedEarnings)}">${signVal(retainedEarnings)}</td><td></td></tr>
+      <tr class="xl-indent" style="font-size:11px;"><td class="xl-rn"></td>
+        <td style="padding-left:26px!important;color:#6b7280;">Total Sales (all time)</td>
+        <td class="xl-num pos">${money(allS.saleAmt)}</td><td></td></tr>
+      <tr class="xl-indent" style="font-size:11px;"><td class="xl-rn"></td>
+        <td style="padding-left:26px!important;color:#6b7280;">Less: Total Expenses</td>
+        <td class="xl-num neg">-${money(allS.expAmt)}</td><td></td></tr>
+      <tr class="xl-subtotal"><td class="xl-rn"></td>
+        <td>Total Owner's Equity</td><td></td>
+        <td class="xl-num ${cls(totalEquity)}">${signVal(totalEquity)}</td></tr>
+      <tr class="xl-spacer"><td colspan="4"></td></tr>
+
+      <tr class="${totalLiabEquity>=0?'xl-net-pos':'xl-net-neg'}">
+        <td class="xl-rn"></td>
+        <td>TOTAL LIABILITIES &amp; EQUITY</td>
+        <td></td>
+        <td class="xl-num">${signVal(totalLiabEquity)}</td>
+      </tr>
     </tbody>
   </table></div>`;
 }
@@ -767,7 +969,10 @@ function vCashflow(cb, ft) {
   const sorted=[...ft].sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
   let bal=0;
   const rows=sorted.map((t,i)=>{
-    bal+=(t.type==='income'?t.amount:-t.amount);
+    const a=txAmts(t);
+    const cashIn  = a.paidAmt;
+    const cashOut = a.expAmt;
+    bal+=cashIn-cashOut;
     return `<tr>
       <td class="xl-rn">${i+1}</td>
       <td>${sd(t.date)}</td>
@@ -775,28 +980,30 @@ function vCashflow(cb, ft) {
       <td><span class="${t.type==='income'?'badge-inc':'badge-exp'}">${t.type==='income'?'↑':'↓'}</span></td>
       <td>${esc(t.cat)}</td>
       <td>${esc(t.desc)}</td>
-      <td class="xl-num ${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${money(t.amount)}</td>
+      <td class="xl-num pos">${cashIn>0?money(cashIn):'—'}</td>
+      <td class="xl-num neg">${cashOut>0?money(cashOut):'—'}</td>
       <td class="xl-num ${cls(bal)}">${signVal(bal)}</td>
       <td style="text-align:center"><button class="del-btn" onclick="delTx('${t.id}')">×</button></td>
     </tr>`;
   }).join('');
   const s=sum(ft);
   cb.innerHTML = `<div class="xl-wrap"><table class="xl-table">
-    <colgroup><col style="width:40px"><col style="width:96px"><col style="width:76px"><col style="width:76px"><col style="width:128px"><col><col style="width:114px"><col style="width:114px"><col style="width:32px"></colgroup>
+    <colgroup><col style="width:36px"><col style="width:88px"><col style="width:70px"><col style="width:70px"><col style="width:120px"><col><col style="width:106px"><col style="width:106px"><col style="width:106px"><col style="width:32px"></colgroup>
     <thead><tr class="xl-hdr">
-      <th class="xl-rn no-sort">#</th><th>Date</th><th>Ref #</th><th class="no-sort">Type</th><th>Category</th><th>Description</th>
-      <th class="xl-num no-sort">Amount</th><th class="xl-num no-sort">Running Balance</th><th class="no-sort"></th>
+      <th class="xl-rn no-sort">#</th><th class="no-sort">Date</th><th class="no-sort">Ref #</th><th class="no-sort">Type</th><th class="no-sort">Category</th><th class="no-sort">Description</th>
+      <th class="xl-num no-sort">Cash In</th><th class="xl-num no-sort">Cash Out</th><th class="xl-num no-sort">Running Balance</th><th class="no-sort"></th>
     </tr></thead>
     <tbody>
-      <tr class="xl-stmt-title"><td></td><td colspan="8">${esc(biz.name)}</td></tr>
-      <tr class="xl-stmt-sub"><td></td><td colspan="8">Cash Flow Statement &nbsp;|&nbsp; ${pLabel}</td></tr>
-      <tr class="xl-spacer"><td colspan="9"></td></tr>
-      <tr class="xl-section"><td></td><td colspan="8">Cash Movements — Operating Activities</td></tr>
-      ${rows||`<tr><td colspan="9" style="padding:32px;text-align:center;color:#9ca3af;font-style:italic;">No transactions in this period.</td></tr>`}
-      <tr class="xl-spacer"><td colspan="9"></td></tr>
+      <tr class="xl-stmt-title"><td></td><td colspan="9">${esc(biz.name)}</td></tr>
+      <tr class="xl-stmt-sub"><td></td><td colspan="9">Cash Flow Statement &nbsp;|&nbsp; ${pLabel}</td></tr>
+      <tr class="xl-spacer"><td colspan="10"></td></tr>
+      <tr class="xl-section"><td></td><td colspan="9">Operating Activities</td></tr>
+      ${rows||`<tr><td colspan="10" style="padding:32px;text-align:center;color:#9ca3af;font-style:italic;">No transactions in this period.</td></tr>`}
+      <tr class="xl-spacer"><td colspan="10"></td></tr>
       <tr class="xl-total">
         <td class="xl-rn"></td><td colspan="5">NET CASH FLOW</td>
-        <td class="xl-num ${cls(s.net)}">${signVal(s.net)}</td>
+        <td class="xl-num pos">${money(s.paidAmt)}</td>
+        <td class="xl-num neg">${money(s.expAmt)}</td>
         <td class="xl-num ${cls(bal)}">${signVal(bal)}</td><td></td>
       </tr>
     </tbody>
@@ -819,31 +1026,36 @@ function vMonthly(cb) {
       <td class="xl-rn">${i+1}</td>
       <td>${mo.label}${mo.cur?'<span style="margin-left:6px;padding:1px 5px;border-radius:3px;font-size:9px;background:#dbeafe;color:#1d4ed8;font-weight:700;">CURRENT</span>':''}</td>
       <td style="text-align:center;color:#6b7280;font-size:11px;">${mo.count}</td>
-      <td class="xl-num pos">${money(mo.s.inc)}</td>
-      <td class="xl-num neg">${money(mo.s.exp)}</td>
+      <td class="xl-num pos">${money(mo.s.saleAmt)}</td>
+      <td class="xl-num pos">${money(mo.s.paidAmt)}</td>
+      <td class="xl-num ${mo.s.owed>0?'neg':''}">${money(mo.s.owed)}</td>
+      <td class="xl-num neg">${money(mo.s.expAmt)}</td>
       <td class="xl-num ${cls(mo.s.net)}">${signVal(mo.s.net)}</td>
       <td class="xl-num ${cls(cumNet)}">${signVal(cumNet)}</td>
     </tr>`;
   }).join('');
-  const tot=months.reduce((a,mo)=>({inc:a.inc+mo.s.inc,exp:a.exp+mo.s.exp,net:a.net+mo.s.net}),{inc:0,exp:0,net:0});
+  const tot=months.reduce((a,mo)=>({saleAmt:a.saleAmt+mo.s.saleAmt,paidAmt:a.paidAmt+mo.s.paidAmt,owed:a.owed+mo.s.owed,expAmt:a.expAmt+mo.s.expAmt,net:a.net+mo.s.net}),{saleAmt:0,paidAmt:0,owed:0,expAmt:0,net:0});
   cb.innerHTML = `<div class="xl-wrap"><table class="xl-table">
-    <colgroup><col style="width:40px"><col style="min-width:140px"><col style="width:70px"><col style="width:126px"><col style="width:126px"><col style="width:126px"><col style="width:126px"></colgroup>
+    <colgroup><col style="width:36px"><col style="min-width:120px"><col style="width:58px"><col style="width:110px"><col style="width:110px"><col style="width:110px"><col style="width:110px"><col style="width:110px"><col style="width:110px"></colgroup>
     <thead><tr class="xl-hdr">
-      <th class="xl-rn no-sort">#</th><th>Month</th><th style="text-align:center" class="no-sort">Txns</th>
-      <th class="xl-num no-sort">Income</th><th class="xl-num no-sort">Expense</th>
+      <th class="xl-rn no-sort">#</th><th class="no-sort">Month</th><th style="text-align:center" class="no-sort">Txns</th>
+      <th class="xl-num no-sort">Sales</th><th class="xl-num no-sort">Collected</th>
+      <th class="xl-num no-sort">Owed</th><th class="xl-num no-sort">Expenses</th>
       <th class="xl-num no-sort">Net P&amp;L</th><th class="xl-num no-sort">Cumulative</th>
     </tr></thead>
     <tbody>
-      <tr class="xl-stmt-title"><td></td><td colspan="6">${esc(biz.name)}</td></tr>
-      <tr class="xl-stmt-sub"><td></td><td colspan="6">Monthly P&amp;L Report — 12 Months</td></tr>
-      <tr class="xl-spacer"><td colspan="7"></td></tr>
+      <tr class="xl-stmt-title"><td></td><td colspan="8">${esc(biz.name)}</td></tr>
+      <tr class="xl-stmt-sub"><td></td><td colspan="8">Monthly Report — 12 Months</td></tr>
+      <tr class="xl-spacer"><td colspan="9"></td></tr>
       ${rows}
-      <tr class="xl-spacer"><td colspan="7"></td></tr>
+      <tr class="xl-spacer"><td colspan="9"></td></tr>
       <tr class="xl-total">
         <td class="xl-rn"></td><td>12-MONTH TOTAL</td>
         <td style="text-align:center;">${months.reduce((s,m)=>s+m.count,0)}</td>
-        <td class="xl-num">${money(tot.inc)}</td>
-        <td class="xl-num">${money(tot.exp)}</td>
+        <td class="xl-num">${money(tot.saleAmt)}</td>
+        <td class="xl-num">${money(tot.paidAmt)}</td>
+        <td class="xl-num">${money(tot.owed)}</td>
+        <td class="xl-num">${money(tot.expAmt)}</td>
         <td class="xl-num ${cls(tot.net)}">${signVal(tot.net)}</td>
         <td class="xl-num ${cls(cumNet)}">${signVal(cumNet)}</td>
       </tr>
@@ -856,33 +1068,35 @@ function vCategory(cb, ft) {
   const pLabel = {all:'All Time',year:'This Year',month:'This Month',week:'This Week',today:'Today'}[document.getElementById('periodSel').value]||'';
   const byCat={};
   ft.forEach(t=>{
-    if(!byCat[t.cat]) byCat[t.cat]={cat:t.cat,inc:0,exp:0,count:0};
-    byCat[t.cat][t.type==='income'?'inc':'exp']+=t.amount;
+    const a=txAmts(t);
+    if(!byCat[t.cat]) byCat[t.cat]={cat:t.cat,sale:0,paid:0,owed:0,exp:0,count:0};
+    byCat[t.cat].sale+=a.saleAmt; byCat[t.cat].paid+=a.paidAmt;
+    byCat[t.cat].owed+=a.owed;   byCat[t.cat].exp+=a.expAmt;
     byCat[t.cat].count++;
   });
-  const cats=Object.values(byCat).sort((a,b)=>(b.inc+b.exp)-(a.inc+a.exp));
-  const tot=cats.reduce((a,r)=>({inc:a.inc+r.inc,exp:a.exp+r.exp}),{inc:0,exp:0});
-  const iCats=cats.filter(r=>r.inc>0), eCats=cats.filter(r=>r.exp>0);
+  const cats=Object.values(byCat).sort((a,b)=>(b.sale+b.exp)-(a.sale+a.exp));
+  const tot=cats.reduce((a,r)=>({sale:a.sale+r.sale,paid:a.paid+r.paid,owed:a.owed+r.owed,exp:a.exp+r.exp}),{sale:0,paid:0,owed:0,exp:0});
+  const iCats=cats.filter(r=>r.sale>0), eCats=cats.filter(r=>r.exp>0);
   const catRows=(arr,rn)=>arr.map((r,i)=>`<tr class="xl-indent">
     <td class="xl-rn">${rn+i+1}</td><td>${esc(r.cat)}</td>
     <td style="text-align:center;color:#6b7280;font-size:11px;">${r.count}</td>
-    <td class="xl-num">${r.inc>0?`<span class="pos">${money(r.inc)}</span>`:'—'}</td>
-    <td class="xl-num">${r.exp>0?`<span class="neg">${money(r.exp)}</span>`:'—'}</td>
-    <td class="xl-num ${cls(r.inc-r.exp)}">${signVal(r.inc-r.exp)}</td>
-    <td class="xl-num" style="color:#6b7280">${tot.inc>0&&r.inc>0?(r.inc/tot.inc*100).toFixed(1)+'%':tot.exp>0&&r.exp>0?(r.exp/tot.exp*100).toFixed(1)+'%':'—'}</td>
+    <td class="xl-num pos">${r.sale>0?money(r.sale):'—'}</td>
+    <td class="xl-num pos">${r.paid>0?money(r.paid):'—'}</td>
+    <td class="xl-num ${r.owed>0?'neg':''}">${r.owed>0?money(r.owed):'—'}</td>
+    <td class="xl-num neg">${r.exp>0?money(r.exp):'—'}</td>
   </tr>`).join('');
   cb.innerHTML = `<div class="xl-wrap"><table class="xl-table">
-    <colgroup><col style="width:40px"><col style="min-width:180px"><col style="width:70px"><col style="width:126px"><col style="width:126px"><col style="width:126px"><col style="width:80px"></colgroup>
+    <colgroup><col style="width:36px"><col style="min-width:160px"><col style="width:60px"><col style="width:116px"><col style="width:116px"><col style="width:116px"><col style="width:116px"></colgroup>
     <thead><tr class="xl-hdr">
-      <th class="xl-rn no-sort">#</th><th>Category</th><th style="text-align:center" class="no-sort">Txns</th>
-      <th class="xl-num no-sort">Income</th><th class="xl-num no-sort">Expense</th>
-      <th class="xl-num no-sort">Net</th><th class="xl-num no-sort">% Share</th>
+      <th class="xl-rn no-sort">#</th><th class="no-sort">Category</th><th style="text-align:center" class="no-sort">Txns</th>
+      <th class="xl-num no-sort">Sales</th><th class="xl-num no-sort">Collected</th>
+      <th class="xl-num no-sort">Owed</th><th class="xl-num no-sort">Expenses</th>
     </tr></thead>
     <tbody>
       <tr class="xl-stmt-title"><td></td><td colspan="6">${esc(biz.name)}</td></tr>
       <tr class="xl-stmt-sub"><td></td><td colspan="6">Category Breakdown &nbsp;|&nbsp; ${pLabel}</td></tr>
       <tr class="xl-spacer"><td colspan="7"></td></tr>
-      ${iCats.length?`<tr class="xl-section"><td></td><td colspan="6">Income Categories</td></tr>${catRows(iCats,0)}`:''}
+      ${iCats.length?`<tr class="xl-section"><td></td><td colspan="6">Sales Categories</td></tr>${catRows(iCats,0)}`:''}
       ${iCats.length&&eCats.length?`<tr class="xl-spacer"><td colspan="7"></td></tr>`:''}
       ${eCats.length?`<tr class="xl-section"><td></td><td colspan="6">Expense Categories</td></tr>${catRows(eCats,iCats.length)}`:''}
       ${!cats.length?`<tr><td colspan="7" style="padding:32px;text-align:center;color:#9ca3af;font-style:italic;">No transactions in this period.</td></tr>`:''}
@@ -890,10 +1104,10 @@ function vCategory(cb, ft) {
       <tr class="xl-total">
         <td class="xl-rn"></td><td>TOTALS</td>
         <td style="text-align:center;">${ft.length}</td>
-        <td class="xl-num">${money(tot.inc)}</td>
+        <td class="xl-num">${money(tot.sale)}</td>
+        <td class="xl-num">${money(tot.paid)}</td>
+        <td class="xl-num">${money(tot.owed)}</td>
         <td class="xl-num">${money(tot.exp)}</td>
-        <td class="xl-num ${cls(tot.inc-tot.exp)}">${signVal(tot.inc-tot.exp)}</td>
-        <td></td>
       </tr>
     </tbody>
   </table></div>`;
@@ -915,8 +1129,12 @@ function clearAll() {
 function exportCSV() {
   const ft=periodTxs();
   if (!ft.length){ alert('No data to export.'); return; }
-  const hdr=['Date','Type','Reference','Category','Description','Amount','Notes'];
-  const rows=ft.map(t=>[t.date,t.type,t.ref||'',t.cat,t.desc,t.amount.toFixed(2),t.notes||'']);
+  const hdr=['Date','Type','Reference','Category','Description','Sale Amount','Paid Amount','Amount Owed','Expense Amount','Notes'];
+  const rows=ft.map(t=>{
+    const a=txAmts(t);
+    return [t.date,t.type,t.ref||'',t.cat,t.desc,
+      a.saleAmt.toFixed(2),a.paidAmt.toFixed(2),a.owed.toFixed(2),a.expAmt.toFixed(2),t.notes||''];
+  });
   const csv=[hdr,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
   const a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
