@@ -245,6 +245,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .fi-sm:focus{border-color:#3b82f6}
 .fbar-count{margin-left:auto;font-size:11px;color:#9ca3af}
 
+/* ── SMS phone list ────────────────────────────────────── */
+.sms-phone-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sms-phone-row .fi{flex:1;margin:0}
+.sms-remove-btn{width:32px;height:36px;border:1px solid #e5e7eb;background:#fff;border-radius:6px;color:#9ca3af;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s;line-height:1}
+.sms-remove-btn:hover{border-color:#dc2626;color:#dc2626;background:#fef2f2}
+.sms-add-btn{display:flex;align-items:center;gap:6px;padding:7px 12px;background:#f5f7ff;border:1.5px dashed #c7d5fb;border-radius:7px;color:#2B5EEB;font-size:12px;font-weight:600;cursor:pointer;transition:all .12s;width:100%}
+.sms-add-btn:hover{background:#eef2fd;border-color:#2B5EEB}
+
 /* ── SMS toggle ────────────────────────────────────────── */
 .sms-toggle{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0}
 .sms-toggle input{opacity:0;width:0;height:0;position:absolute}
@@ -541,7 +549,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 <script>
 // ═══ Data ══════════════════════════════════════════════════
 let txs = JSON.parse(localStorage.getItem('biz_txs') || '[]');
-let biz = { name:'My Business', type:'Sole Trader', industry:'', currency:'USD', yearStart:'January', address:'', phone:'', email:'', smsEnabled:false, smsPhone:'', ...JSON.parse(localStorage.getItem('biz_profile') || '{}') };
+let biz = { name:'My Business', type:'Sole Trader', industry:'', currency:'USD', yearStart:'January', address:'', phone:'', email:'', smsEnabled:false, smsPhone:'', smsPhones:[], ...JSON.parse(localStorage.getItem('biz_profile') || '{}') };
+// Migrate legacy single smsPhone → smsPhones array
+if (biz.smsPhone && !biz.smsPhones.length) biz.smsPhones = [biz.smsPhone];
 
 // Migrate old transactions that lack saleAmt/paidAmt fields
 txs = txs.map(t => {
@@ -1087,9 +1097,20 @@ function vProfile(cb) {
         </label>
       </div>
       <div class="fg full">
-        <label>SMS Phone Number <span style="color:#9ca3af;font-size:9px;font-weight:400">(include country code)</span></label>
-        <input class="fi" id="bSmsPhone" value="${esc(biz.smsPhone)}" placeholder="+1 555 000 0000" type="tel" oninput="this.value=this.value.replace(/(?!^\+)[^0-9]/g,'')">
-        <div style="font-size:10.5px;color:#9ca3af;margin-top:4px">Must start with <b>+</b> and country code — e.g. <b>+1</b>7816580136 for US</div>
+        <label>SMS Phone Numbers <span style="color:#9ca3af;font-size:9px;font-weight:400">(include country code · all numbers receive both texts)</span></label>
+        <div id="smsPhoneList">
+          ${(biz.smsPhones.length ? biz.smsPhones : ['']).map((n,i) => `
+          <div class="sms-phone-row">
+            <input class="fi sms-phone-input" type="tel" value="${esc(n)}" placeholder="+1 555 000 0000"
+              oninput="this.value=this.value.replace(/(?!^\\+)[^0-9]/g,'')">
+            <button class="sms-remove-btn" onclick="removeSmsPhone(this)" title="Remove">×</button>
+          </div>`).join('')}
+        </div>
+        <button class="sms-add-btn" onclick="addSmsPhone()">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:13px;height:13px"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>
+          Add another number
+        </button>
+        <div style="font-size:10.5px;color:#9ca3af;margin-top:6px">Must start with <b>+</b> and country code — e.g. <b>+1</b>7816580136 for US/Canada</div>
       </div>
     </div>
     <button class="btn-submit" onclick="saveSmsSettings()" style="background:#2B5EEB">Save SMS Settings</button>
@@ -1108,14 +1129,37 @@ function saveProfile() {
   save(); toast('Profile saved ✓');
 }
 
+function addSmsPhone() {
+  const list = document.getElementById('smsPhoneList');
+  if (!list) return;
+  const row = document.createElement('div');
+  row.className = 'sms-phone-row';
+  row.innerHTML = `<input class="fi sms-phone-input" type="tel" placeholder="+1 555 000 0000"
+    oninput="this.value=this.value.replace(/(?!^\\+)[^0-9]/g,'')">
+    <button class="sms-remove-btn" onclick="removeSmsPhone(this)" title="Remove">×</button>`;
+  list.appendChild(row);
+  row.querySelector('input').focus();
+}
+
+function removeSmsPhone(btn) {
+  const rows = document.querySelectorAll('#smsPhoneList .sms-phone-row');
+  if (rows.length <= 1) { btn.closest('.sms-phone-row').querySelector('input').value = ''; return; }
+  btn.closest('.sms-phone-row').remove();
+}
+
 function saveSmsSettings() {
-  const phone = document.getElementById('bSmsPhone').value.trim();
   const enabled = document.getElementById('bSmsEnabled').checked;
-  if (enabled && !phone) { toast('Enter a phone number to enable SMS'); return; }
+  const phones  = [...document.querySelectorAll('.sms-phone-input')]
+                    .map(el => el.value.trim())
+                    .filter(Boolean);
+  if (enabled && !phones.length) { toast('Add at least one phone number to enable SMS'); return; }
   biz.smsEnabled = enabled;
-  biz.smsPhone   = phone;
+  biz.smsPhones  = phones;
+  biz.smsPhone   = phones[0] || '';
   save();
-  toast(enabled ? 'SMS alerts enabled ✓ — transactions will trigger a text to ' + phone : 'SMS alerts disabled');
+  toast(enabled
+    ? `SMS alerts enabled ✓ — sending to ${phones.length} number${phones.length>1?'s':''}`
+    : 'SMS alerts disabled');
   vProfile(document.getElementById('cb'));
 }
 
@@ -1233,22 +1277,27 @@ async function sendSmsAlert(tx) {
                `Net:      ${signVal(td.net)}\n` +
                `— ${biz.name}`;
 
-  async function sms(message) {
+  const numbers = (biz.smsPhones && biz.smsPhones.length) ? biz.smsPhones : (biz.smsPhone ? [biz.smsPhone] : []);
+  if (!numbers.length) return;
+
+  async function sms(to, message) {
     const res = await fetch('/api/send-sms', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ to: biz.smsPhone, message })
+      body: JSON.stringify({ to, message })
     });
     return res.json();
   }
 
   try {
-    const [r1, r2] = await Promise.all([sms(msg1), sms(msg2)]);
-    if (r1.success && r2.success) {
-      toast('2 SMS sent to ' + biz.smsPhone + ' ✓');
+    // Send both texts to every number simultaneously
+    const calls = numbers.flatMap(to => [sms(to, msg1), sms(to, msg2)]);
+    const results = await Promise.all(calls);
+    const failed  = results.filter(r => !r.success);
+    if (!failed.length) {
+      toast(`2 SMS sent to ${numbers.length} number${numbers.length>1?'s':''} ✓`);
     } else {
-      const err = (!r1.success ? r1.error : r2.error) || 'unknown error';
-      toast('SMS error: ' + err);
+      toast('Some SMS failed: ' + (failed[0].error || 'unknown error'));
     }
   } catch(e) {
     toast('SMS unavailable — is server.py running?');
