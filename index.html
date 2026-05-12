@@ -245,6 +245,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .fi-sm:focus{border-color:#3b82f6}
 .fbar-count{margin-left:auto;font-size:11px;color:#9ca3af}
 
+/* ── SMS toggle ────────────────────────────────────────── */
+.sms-toggle{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0}
+.sms-toggle input{opacity:0;width:0;height:0;position:absolute}
+.sms-slider{position:absolute;cursor:pointer;inset:0;background:#d1d5db;border-radius:26px;transition:.2s}
+.sms-slider::before{content:'';position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sms-toggle input:checked + .sms-slider{background:#2B5EEB}
+.sms-toggle input:checked + .sms-slider::before{transform:translateX(20px)}
+
 /* ── Type badge ────────────────────────────────────────── */
 .badge-inc{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;background:#dcfce7;color:#166534}
 .badge-exp{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;background:#fee2e2;color:#991b1b}
@@ -1073,16 +1081,15 @@ function vProfile(cb) {
           <div style="font-size:13px;font-weight:600;color:#1a1f36">Enable SMS alerts</div>
           <div style="font-size:11px;color:#9ca3af;margin-top:2px">Send a text after each transaction</div>
         </div>
-        <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
-          <input type="checkbox" id="bSmsEnabled" ${biz.smsEnabled?'checked':''} style="opacity:0;width:0;height:0">
-          <span onclick="document.getElementById('bSmsEnabled').click()" style="position:absolute;cursor:pointer;inset:0;background:${biz.smsEnabled?'#2B5EEB':'#d1d5db'};border-radius:24px;transition:.2s">
-            <span style="position:absolute;height:18px;width:18px;left:${biz.smsEnabled?'23px':'3px'};bottom:3px;background:#fff;border-radius:50%;transition:.2s"></span>
-          </span>
+        <label class="sms-toggle">
+          <input type="checkbox" id="bSmsEnabled" ${biz.smsEnabled?'checked':''}>
+          <span class="sms-slider"></span>
         </label>
       </div>
       <div class="fg full">
         <label>SMS Phone Number <span style="color:#9ca3af;font-size:9px;font-weight:400">(include country code)</span></label>
-        <input class="fi" id="bSmsPhone" value="${esc(biz.smsPhone)}" placeholder="+1 555 000 0000" type="tel">
+        <input class="fi" id="bSmsPhone" value="${esc(biz.smsPhone)}" placeholder="+1 555 000 0000" type="tel" oninput="this.value=this.value.replace(/(?!^\+)[^0-9]/g,'')">
+        <div style="font-size:10.5px;color:#9ca3af;margin-top:4px">Must start with <b>+</b> and country code — e.g. <b>+1</b>7816580136 for US</div>
       </div>
     </div>
     <button class="btn-submit" onclick="saveSmsSettings()" style="background:#2B5EEB">Save SMS Settings</button>
@@ -1191,21 +1198,58 @@ function submitTx() {
 async function sendSmsAlert(tx) {
   if (!biz.smsEnabled || !biz.smsPhone) return;
   const a = txAmts(tx);
-  let msg;
+
+  // ── Text 1: transaction details
+  let msg1;
   if (tx.type === 'income') {
-    msg = `BizTrack ✓ New Sale\n${tx.desc}${tx.ref?' ('+tx.ref+')':''}\nSale: ${money(a.saleAmt)}  Paid: ${money(a.paidAmt)}  Owed: ${money(a.owed)}\nDate: ${tx.date}\n— ${biz.name}`;
+    msg1 = `BizTrack ✓ New Sale\n` +
+           `${tx.desc}${tx.ref ? ' (' + tx.ref + ')' : ''}\n` +
+           `Sale:  ${money(a.saleAmt)}\n` +
+           `Paid:  ${money(a.paidAmt)}\n` +
+           `Owed:  ${money(a.owed)}\n` +
+           `Date:  ${tx.date}\n` +
+           `Cat:   ${tx.cat}\n` +
+           `— ${biz.name}`;
   } else {
-    msg = `BizTrack ✓ Expense\n${tx.desc}\nAmount: ${money(a.expAmt)}  Category: ${tx.cat}\nDate: ${tx.date}\n— ${biz.name}`;
+    msg1 = `BizTrack ✓ Expense\n` +
+           `${tx.desc}\n` +
+           `Amount: ${money(a.expAmt)}\n` +
+           `Cat:    ${tx.cat}\n` +
+           `Date:   ${tx.date}\n` +
+           `— ${biz.name}`;
   }
-  try {
+
+  // ── Text 2: today's running totals
+  const tod = toDS(new Date());
+  const todayTxs = txs.filter(t => t.date === tod);
+  const td = sum(todayTxs);
+  const salesCount  = todayTxs.filter(t => t.type === 'income').length;
+  const expCount    = todayTxs.filter(t => t.type === 'expense').length;
+  const msg2 = `BizTrack — Today's Summary (${tod})\n` +
+               `Sales:    ${money(td.saleAmt)} (${salesCount} txn${salesCount!==1?'s':''})\n` +
+               `Collected:${money(td.paidAmt)}\n` +
+               `Owed:     ${money(td.owed)}\n` +
+               `Expenses: ${money(td.expAmt)} (${expCount} txn${expCount!==1?'s':''})\n` +
+               `Net:      ${signVal(td.net)}\n` +
+               `— ${biz.name}`;
+
+  async function sms(message) {
     const res = await fetch('/api/send-sms', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ to: biz.smsPhone, message: msg })
+      body: JSON.stringify({ to: biz.smsPhone, message })
     });
-    const data = await res.json();
-    if (data.success) toast('SMS sent to ' + biz.smsPhone + ' ✓');
-    else toast('SMS failed: ' + (data.error || 'unknown error'));
+    return res.json();
+  }
+
+  try {
+    const [r1, r2] = await Promise.all([sms(msg1), sms(msg2)]);
+    if (r1.success && r2.success) {
+      toast('2 SMS sent to ' + biz.smsPhone + ' ✓');
+    } else {
+      const err = (!r1.success ? r1.error : r2.error) || 'unknown error';
+      toast('SMS error: ' + err);
+    }
   } catch(e) {
     toast('SMS unavailable — is server.py running?');
   }
